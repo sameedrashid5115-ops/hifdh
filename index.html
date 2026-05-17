@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hifdh — Memorisation Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4efe4;
+  --bg2:#efe8d8;
+  --ink:#2a2218;
+  --ink-soft:#6b5d45;
+  --line:#d8cdb3;
+  --paper:#fbf7ed;
+  --gold:#a07d28;
+  --gold-soft:#c9a94e;
+  --green:#3f6f4f;
+  --teal:#2f6f6a;
+  --none:#e4dcc7;
+  --weak:#c98a4b;
+  --mid:#cdb24a;
+  --strong:#4f8a5b;
+  --shadow:0 1px 2px rgba(60,45,20,.06),0 8px 30px rgba(60,45,20,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background-image:radial-gradient(ellipse at 20% 0%,rgba(200,170,90,.10),transparent 55%),radial-gradient(ellipse at 90% 100%,rgba(60,110,90,.07),transparent 50%);min-height:100vh;padding-bottom:64px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+h1,h2,h3{font-family:'Cormorant Garamond',serif;font-weight:600;letter-spacing:.2px}
+.app-head{padding:34px 0 18px;text-align:center;position:relative}
+.app-head .bism{font-family:'Amiri',serif;font-size:26px;color:var(--gold);margin-bottom:10px;opacity:.85}
+.app-head h1{font-size:40px;font-weight:700;line-height:1}
+.app-head .sub{color:var(--ink-soft);font-size:14px;margin-top:8px;letter-spacing:.4px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:6px 0 0}
+
+.tabs{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:22px 0 26px}
+.tab{font-family:'Outfit';font-size:14px;font-weight:500;color:var(--ink-soft);background:transparent;border:1px solid transparent;padding:9px 18px;border-radius:999px;cursor:pointer;transition:.18s}
+.tab:hover{color:var(--ink);background:rgba(160,125,40,.07)}
+.tab.active{color:var(--paper);background:var(--ink);box-shadow:var(--shadow)}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.section{display:none;animation:fade .35s ease}
+.section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* OVERVIEW */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.stat{padding:20px 22px}
+.stat .lbl{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-soft)}
+.stat .big{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;line-height:1.05;margin-top:6px}
+.stat .big small{font-size:17px;color:var(--ink-soft);font-weight:500}
+.stat .meta{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
+.bar{height:7px;background:var(--none);border-radius:99px;overflow:hidden;margin-top:14px;display:flex}
+.bar i{height:100%;display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);margin-top:14px;align-items:center}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+.ov-title{font-size:23px;margin:30px 0 4px}
+.ov-note{color:var(--ink-soft);font-size:13px;margin-bottom:16px}
+
+.juz-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.jz{padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);cursor:pointer;transition:.16s}
+.jz:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.jz .n{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600}
+.jz .pct{font-size:12px;color:var(--ink-soft);margin-top:2px}
+.jz .mini{height:5px;border-radius:99px;background:var(--none);overflow:hidden;margin-top:9px;display:flex}
+.jz .mini i{height:100%}
+
+/* TRACKER */
+.tracker-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.jselect{display:flex;gap:5px;flex-wrap:wrap}
+.jbtn{font-family:'Outfit';font-size:13px;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer;transition:.14s;font-weight:500}
+.jbtn:hover{border-color:var(--gold-soft);color:var(--ink)}
+.jbtn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.jbtn .d{font-size:8px;display:block;line-height:1;margin-top:2px}
+.surah-nav{display:flex;align-items:stretch;gap:8px}
+.surah-select{flex:1;min-width:0;font-family:'Outfit';font-size:14.5px;font-weight:500;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:12px 14px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2712%27%20height%3D%2712%27%3E%3Cpath%20d%3D%27M2%204l4%204%204-4%27%20stroke%3D%27%236b5d45%27%20stroke-width%3D%271.6%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:38px;transition:.14s}
+.surah-select:hover{border-color:var(--gold-soft)}
+.surah-select:focus{outline:none;border-color:var(--gold)}
+.navbtn{font-family:'Cormorant Garamond',serif;font-size:24px;line-height:1;width:48px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:11px;cursor:pointer;transition:.14s;flex-shrink:0}
+.navbtn:hover:not(:disabled){background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.navbtn:disabled{opacity:.32;cursor:not-allowed}
+
+.help{font-size:12.5px;color:var(--ink-soft);background:rgba(160,125,40,.07);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:16px;line-height:1.55}
+.help b{color:var(--ink)}
+
+.surah-blk{margin-bottom:20px}
+.surah-h{display:flex;align-items:baseline;gap:10px;padding:6px 2px 10px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.surah-h .sn{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600}
+.surah-h .sm{font-size:12.5px;color:var(--ink-soft)}
+.surah-h .sx{font-size:12px;color:var(--ink-soft);margin-left:auto}
+
+.ruku-row{display:flex;align-items:center;gap:12px;padding:10px 4px;border-radius:10px;transition:.14s}
+.ruku-row:hover{background:rgba(160,125,40,.05)}
+.ruku-row .rk{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;min-width:74px}
+.ruku-row .rk small{display:block;font-family:'Outfit';font-size:10.5px;color:var(--ink-soft);font-weight:400;letter-spacing:.3px}
+.scales{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
+.scale{display:flex;flex-direction:column;gap:5px}
+.scale .cap{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft)}
+.pips{display:flex;gap:4px}
+.pip{width:28px;height:26px;border-radius:6px;border:1px solid var(--line);background:var(--paper);cursor:pointer;font-size:11.5px;color:var(--ink-soft);transition:.13s;display:flex;align-items:center;justify-content:center;font-weight:600;padding:0}
+.pip:hover{border-color:var(--gold-soft)}
+.pip.on{color:#fff;border-color:transparent;font-weight:600}
+.pip.a-1.on{background:#d99a6c}.pip.a-2.on{background:#d9b35a}.pip.a-3.on{background:#cdb24a}.pip.a-4.on{background:#7aa564}.pip.a-5.on{background:#4f8a5b}
+.pip.e-1.on{background:#9bb0c4}.pip.e-2.on{background:#7a9bb5}.pip.e-3.on{background:#5b8aa0}.pip.e-4.on{background:#3f7d78}.pip.e-5.on{background:#2f6f4f}
+
+/* PLANNER — CALENDAR */
+.cal-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.cal-title{display:flex;align-items:center;gap:14px}
+.cal-title h2{font-size:25px}
+.todaybtn{font-family:'Outfit';font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 13px;cursor:pointer;transition:.14s}
+.todaybtn:hover{border-color:var(--gold-soft);color:var(--ink)}
+.cal-ctrl{display:flex;align-items:center;gap:8px}
+.viewtog{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:3px}
+.vt{font-family:'Outfit';font-size:12.5px;font-weight:500;color:var(--ink-soft);background:none;border:none;padding:7px 15px;border-radius:7px;cursor:pointer;transition:.14s}
+.vt.on{background:var(--ink);color:var(--paper)}
+.navb{font-family:'Cormorant Garamond',serif;font-size:21px;line-height:1;width:40px;height:38px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:9px;cursor:pointer;transition:.14s}
+.navb:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.cal-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-bottom:14px}
+.cal-legend span{display:flex;align-items:center;gap:6px}
+.cdot{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}
+.qtag{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.cal-dow{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-soft);text-align:center;padding:2px 0 4px;font-weight:500}
+.cell{border:1px solid var(--line);border-radius:11px;background:var(--paper);padding:9px 9px 8px;cursor:pointer;transition:.13s;min-height:64px;display:flex;flex-direction:column;gap:6px}
+.cal-grid.week .cell{min-height:150px}
+.cell:hover{border-color:var(--gold-soft);transform:translateY(-1px);box-shadow:var(--shadow)}
+.cell.dim{opacity:.42}
+.cell.today{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.cell.sel{border-color:var(--ink);box-shadow:0 0 0 1.5px var(--ink) inset}
+.cnum{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;display:flex;align-items:baseline;gap:6px}
+.cnum em{font-family:'Outfit';font-style:normal;font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--gold);font-weight:600}
+.cdots{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:auto}
+.cmore{font-size:9.5px;color:var(--ink-soft);font-style:normal}
+.clines{display:flex;flex-direction:column;gap:4px}
+.cline{display:flex;align-items:center;gap:6px;font-size:11.5px;background:var(--bg2);border-radius:6px;padding:4px 7px;line-height:1.25}
+.cline span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cline.cdone{opacity:.45;text-decoration:line-through}
+.cnone{font-size:11px;color:var(--ink-soft);opacity:.5}
+.day-panel{margin-top:18px;padding:20px 22px;animation:fade .3s}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ph h3{font-size:21px}
+.pclose{border:none;background:none;font-size:15px;color:var(--ink-soft);cursor:pointer;padding:5px 8px;border-radius:7px;transition:.13s}
+.pclose:hover{background:rgba(160,40,40,.1);color:#a33}
+.plist{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.pentry{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:13.5px;animation:fade .22s}
+.pentry.pdone{opacity:.55}
+.pentry.pdone .pt b{text-decoration:line-through}
+.pt{flex:1;line-height:1.35}
+.pt span{color:var(--ink-soft);font-size:12.5px}
+.pdoneb,.pdel{border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--ink-soft);padding:4px 7px;border-radius:6px;transition:.13s;line-height:1}
+.pdoneb{color:var(--green)}.pdoneb:hover{background:rgba(60,110,80,.14)}
+.pdel:hover{background:rgba(160,40,40,.1);color:#a33}
+.pempty{font-size:13px;color:var(--ink-soft);font-style:italic;padding:10px 2px;text-align:center}
+.padd{border-top:1px solid var(--line);padding-top:16px}
+.pact{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:11px}
+.actbtn{font-family:'Outfit';font-size:12.5px;font-weight:500;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:.13s}
+.actbtn:hover{border-color:var(--gold-soft)}
+.actbtn.sel{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.actbtn.sel .qtag{box-shadow:0 0 0 2px rgba(255,255,255,.4)}
+.pnoterow{display:flex;gap:8px}
+.pnoterow input{flex:1;min-width:0;font-family:'Outfit';font-size:13.5px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+.pnoterow input:focus{outline:none;border-color:var(--gold)}
+.pnoterow button{font-family:'Outfit';font-size:13px;font-weight:600;padding:11px 20px;border:none;border-radius:9px;background:var(--ink);color:var(--paper);cursor:pointer;transition:.15s}
+.pnoterow button:hover:not(:disabled){background:var(--gold)}
+.pnoterow button:disabled{opacity:.4;cursor:not-allowed}
+.phint{font-size:11.5px;color:var(--ink-soft);margin-top:9px}
+@media(max-width:680px){.cal-grid.month{gap:4px}.cal-grid.month .cell{min-height:52px;padding:6px 5px}.cnum{font-size:13px}.cal-grid.week{grid-template-columns:1fr;gap:7px}.cal-grid.week .cal-dow{display:none}.cal-grid.week .cell{min-height:auto;flex-direction:row;flex-wrap:wrap;align-items:flex-start}.cal-grid.week .cnum{min-width:60px}.cal-grid.week .clines{flex:1}}
+
+.foot{text-align:center;font-size:12px;color:var(--ink-soft);padding:34px 0 8px;line-height:1.7}
+.foot .tools{display:flex;gap:14px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.foot button{font-family:'Outfit';font-size:12.5px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:8px;padding:8px 18px;cursor:pointer;transition:.14s}
+.foot button:hover{border-color:var(--gold-soft);color:var(--ink)}
+.foot button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
+.foot button.primary:hover{background:var(--gold);border-color:var(--gold);color:#fff}
+.save-banner{border-radius:12px;padding:13px 18px;margin-bottom:20px;font-size:13.5px;line-height:1.6;animation:fade .3s}
+.save-banner .sub{color:var(--ink-soft);font-size:12px}
+.save-banner.info{background:rgba(160,125,40,.08);border:1px solid var(--line);color:var(--ink)}
+.save-banner.warn{background:#fcefe6;border:1px solid #e3b89a;color:#7a3d1c}
+.save-banner.ok{background:rgba(79,138,91,.10);border:1px solid #a9c9b0;color:#36603f;font-size:12.5px;padding:9px 16px;display:flex;align-items:center;gap:9px}
+.save-banner .sdot{width:8px;height:8px;border-radius:50%;background:#4f8a5b;display:inline-block;flex-shrink:0}
+.save-banner .rb{display:inline-block;margin-left:6px;font-family:'Outfit';font-size:12.5px;font-weight:700;color:#fff;background:#7a3d1c;border:1px solid #7a3d1c;border-radius:7px;padding:6px 16px;cursor:pointer;transition:.14s}
+.save-banner .rb:hover{background:#5e2d12}
+.save-banner .rb.alt{background:#fff;color:#7a3d1c;margin-left:8px}
+.save-banner .rb.alt:hover{background:#f3e3d6}
+.paste-ov{position:fixed;inset:0;background:rgba(42,34,24,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:18px;animation:fade .2s}
+.paste-box{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(40,30,15,.3);width:100%;max-width:560px;padding:22px 22px 18px}
+.paste-box h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin-bottom:6px}
+.paste-box p{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:13px}
+.paste-box textarea{width:100%;height:190px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--bg2);color:var(--ink);resize:vertical;-webkit-user-select:text;user-select:text}
+.paste-box textarea:focus{outline:none;border-color:var(--gold)}
+.paste-act{display:flex;gap:9px;margin-top:14px;justify-content:flex-end}
+.paste-act .pgo{font-family:'Outfit';font-size:13px;font-weight:600;color:var(--paper);background:var(--ink);border:none;border-radius:9px;padding:10px 20px;cursor:pointer;transition:.14s}
+.paste-act .pgo:hover{background:var(--gold)}
+.paste-act .pcl{font-family:'Outfit';font-size:13px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:9px;padding:10px 18px;cursor:pointer;transition:.14s}
+.paste-act .pcl:hover{border-color:var(--gold-soft);color:var(--ink)}
+.save-pill{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--ink);color:var(--paper);font-size:12.5px;padding:9px 20px;border-radius:999px;box-shadow:var(--shadow);transition:.35s;letter-spacing:.3px;z-index:50;max-width:90vw;text-align:center}
+.save-pill.show{transform:translateX(-50%) translateY(0)}
+.loading{text-align:center;padding:80px 0;color:var(--ink-soft);font-family:'Cormorant Garamond',serif;font-size:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-head">
+    <div class="bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>Hifdh</h1>
+    <div class="sub">RUKU&nbsp;·&nbsp;BY&nbsp;·&nbsp;RUKU&nbsp;&nbsp;—&nbsp;&nbsp;MEMORISATION&nbsp;&amp;&nbsp;UNDERSTANDING</div>
+    <div class="divider"></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-s="overview">Overview</button>
+    <button class="tab" data-s="tracker">Ruku Tracker</button>
+    <button class="tab" data-s="planner">Planner</button>
+  </nav>
+
+  <div class="save-banner" id="saveBanner" style="display:none"></div>
+
+  <section id="overview" class="section active"><div class="loading">Loading your progress…</div></section>
+  <section id="tracker" class="section"></section>
+  <section id="planner" class="section"></section>
+
+  <div class="foot">
+    When hosted on the web, your progress saves <b>automatically</b> on this device.<br>
+    <b>Save</b> / <b>Open</b> / <b>Copy backup</b> below are optional extras for keeping a safety copy.
+    <div class="tools">
+      <button id="exportBtn" class="primary">Save</button>
+      <button id="importBtn">Open</button>
+      <button id="copyBtn">Copy backup</button>
+      <button id="pasteBtn">Paste backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    </div>
+  </div>
+</div>
+<div class="save-pill" id="savePill">Saved</div>
+
+<script>
+const QURAN = {"surahs":[{"no":1,"en":"Al-Fatihah","mn":"The Opening","rc":1},{"no":2,"en":"Al-Baqarah","mn":"The Cow","rc":40},{"no":3,"en":"Aal-e-Imran","mn":"The Family of Imran","rc":20},{"no":4,"en":"An-Nisa","mn":"The Women","rc":24},{"no":5,"en":"Al-Ma'idah","mn":"The Table Spread","rc":16},{"no":6,"en":"Al-An'am","mn":"The Cattle","rc":20},{"no":7,"en":"Al-A'raf","mn":"The Heights","rc":24},{"no":8,"en":"Al-Anfal","mn":"The Spoils of War","rc":10},{"no":9,"en":"At-Tawbah","mn":"The Repentance","rc":16},{"no":10,"en":"Yunus","mn":"Jonah","rc":11},{"no":11,"en":"Hud","mn":"Hud","rc":10},{"no":12,"en":"Yusuf","mn":"Joseph","rc":12},{"no":13,"en":"Ar-Ra'd","mn":"The Thunder","rc":6},{"no":14,"en":"Ibrahim","mn":"Abraham","rc":7},{"no":15,"en":"Al-Hijr","mn":"The Rocky Tract","rc":6},{"no":16,"en":"An-Nahl","mn":"The Bee","rc":16},{"no":17,"en":"Al-Isra","mn":"The Night Journey","rc":12},{"no":18,"en":"Al-Kahf","mn":"The Cave","rc":12},{"no":19,"en":"Maryam","mn":"Mary","rc":6},{"no":20,"en":"Ta-Ha","mn":"Ta-Ha","rc":8},{"no":21,"en":"Al-Anbiya","mn":"The Prophets","rc":7},{"no":22,"en":"Al-Hajj","mn":"The Pilgrimage","rc":10},{"no":23,"en":"Al-Mu'minun","mn":"The Believers","rc":6},{"no":24,"en":"An-Nur","mn":"The Light","rc":9},{"no":25,"en":"Al-Furqan","mn":"The Criterion","rc":6},{"no":26,"en":"Ash-Shu'ara","mn":"The Poets","rc":11},{"no":27,"en":"An-Naml","mn":"The Ant","rc":7},{"no":28,"en":"Al-Qasas","mn":"The Stories","rc":9},{"no":29,"en":"Al-Ankabut","mn":"The Spider","rc":7},{"no":30,"en":"Ar-Rum","mn":"The Romans","rc":6},{"no":31,"en":"Luqman","mn":"Luqman","rc":4},{"no":32,"en":"As-Sajdah","mn":"The Prostration","rc":3},{"no":33,"en":"Al-Ahzab","mn":"The Combined Forces","rc":9},{"no":34,"en":"Saba","mn":"Sheba","rc":6},{"no":35,"en":"Fatir","mn":"Originator","rc":5},{"no":36,"en":"Ya-Sin","mn":"Ya-Sin","rc":5},{"no":37,"en":"As-Saffat","mn":"Those Who Set the Ranks","rc":5},{"no":38,"en":"Sad","mn":"Sad","rc":5},{"no":39,"en":"Az-Zumar","mn":"The Troops","rc":8},{"no":40,"en":"Ghafir","mn":"The Forgiver","rc":9},{"no":41,"en":"Fussilat","mn":"Explained in Detail","rc":6},{"no":42,"en":"Ash-Shura","mn":"The Consultation","rc":5},{"no":43,"en":"Az-Zukhruf","mn":"The Ornaments of Gold","rc":7},{"no":44,"en":"Ad-Dukhan","mn":"The Smoke","rc":3},{"no":45,"en":"Al-Jathiyah","mn":"The Crouching","rc":4},{"no":46,"en":"Al-Ahqaf","mn":"The Wind-Curved Sandhills","rc":4},{"no":47,"en":"Muhammad","mn":"Muhammad","rc":4},{"no":48,"en":"Al-Fath","mn":"The Victory","rc":4},{"no":49,"en":"Al-Hujurat","mn":"The Rooms","rc":2},{"no":50,"en":"Qaf","mn":"Qaf","rc":3},{"no":51,"en":"Adh-Dhariyat","mn":"The Winnowing Winds","rc":3},{"no":52,"en":"At-Tur","mn":"The Mount","rc":2},{"no":53,"en":"An-Najm","mn":"The Star","rc":3},{"no":54,"en":"Al-Qamar","mn":"The Moon","rc":3},{"no":55,"en":"Ar-Rahman","mn":"The Beneficent","rc":3},{"no":56,"en":"Al-Waqi'ah","mn":"The Inevitable","rc":3},{"no":57,"en":"Al-Hadid","mn":"The Iron","rc":4},{"no":58,"en":"Al-Mujadilah","mn":"The Pleading Woman","rc":3},{"no":59,"en":"Al-Hashr","mn":"The Exile","rc":3},{"no":60,"en":"Al-Mumtahanah","mn":"She That Is to Be Examined","rc":2},{"no":61,"en":"As-Saff","mn":"The Ranks","rc":2},{"no":62,"en":"Al-Jumu'ah","mn":"Friday","rc":2},{"no":63,"en":"Al-Munafiqun","mn":"The Hypocrites","rc":2},{"no":64,"en":"At-Taghabun","mn":"The Mutual Disillusion","rc":2},{"no":65,"en":"At-Talaq","mn":"The Divorce","rc":2},{"no":66,"en":"At-Tahrim","mn":"The Prohibition","rc":2},{"no":67,"en":"Al-Mulk","mn":"The Sovereignty","rc":2},{"no":68,"en":"Al-Qalam","mn":"The Pen","rc":2},{"no":69,"en":"Al-Haqqah","mn":"The Reality","rc":2},{"no":70,"en":"Al-Ma'arij","mn":"The Ascending Stairways","rc":2},{"no":71,"en":"Nuh","mn":"Noah","rc":2},{"no":72,"en":"Al-Jinn","mn":"The Jinn","rc":2},{"no":73,"en":"Al-Muzzammil","mn":"The Enshrouded One","rc":2},{"no":74,"en":"Al-Muddaththir","mn":"The Cloaked One","rc":2},{"no":75,"en":"Al-Qiyamah","mn":"The Resurrection","rc":2},{"no":76,"en":"Al-Insan","mn":"The Man","rc":2},{"no":77,"en":"Al-Mursalat","mn":"The Emissaries","rc":2},{"no":78,"en":"An-Naba","mn":"The Tidings","rc":2},{"no":79,"en":"An-Nazi'at","mn":"Those Who Drag Forth","rc":2},{"no":80,"en":"Abasa","mn":"He Frowned","rc":1},{"no":81,"en":"At-Takwir","mn":"The Overthrowing","rc":1},{"no":82,"en":"Al-Infitar","mn":"The Cleaving","rc":1},{"no":83,"en":"Al-Mutaffifin","mn":"The Defrauding","rc":1},{"no":84,"en":"Al-Inshiqaq","mn":"The Sundering","rc":1},{"no":85,"en":"Al-Buruj","mn":"The Mansions of the Stars","rc":1},{"no":86,"en":"At-Tariq","mn":"The Morning Star","rc":1},{"no":87,"en":"Al-A'la","mn":"The Most High","rc":1},{"no":88,"en":"Al-Ghashiyah","mn":"The Overwhelming","rc":1},{"no":89,"en":"Al-Fajr","mn":"The Dawn","rc":1},{"no":90,"en":"Al-Balad","mn":"The City","rc":1},{"no":91,"en":"Ash-Shams","mn":"The Sun","rc":1},{"no":92,"en":"Al-Lail","mn":"The Night","rc":1},{"no":93,"en":"Ad-Duha","mn":"The Morning Hours","rc":1},{"no":94,"en":"Ash-Sharh","mn":"The Relief","rc":1},{"no":95,"en":"At-Tin","mn":"The Fig","rc":1},{"no":96,"en":"Al-Alaq","mn":"The Clot","rc":1},{"no":97,"en":"Al-Qadr","mn":"The Power","rc":1},{"no":98,"en":"Al-Bayyinah","mn":"The Clear Proof","rc":1},{"no":99,"en":"Az-Zalzalah","mn":"The Earthquake","rc":1},{"no":100,"en":"Al-Adiyat","mn":"The Courser","rc":1},{"no":101,"en":"Al-Qari'ah","mn":"The Calamity","rc":1},{"no":102,"en":"At-Takathur","mn":"The Rivalry in World Increase","rc":1},{"no":103,"en":"Al-Asr","mn":"The Declining Day","rc":1},{"no":104,"en":"Al-Humazah","mn":"The Traducer","rc":1},{"no":105,"en":"Al-Fil","mn":"The Elephant","rc":1},{"no":106,"en":"Quraysh","mn":"Quraysh","rc":1},{"no":107,"en":"Al-Ma'un","mn":"The Small Kindnesses","rc":1},{"no":108,"en":"Al-Kawthar","mn":"The Abundance","rc":1},{"no":109,"en":"Al-Kafirun","mn":"The Disbelievers","rc":1},{"no":110,"en":"An-Nasr","mn":"The Divine Support","rc":1},{"no":111,"en":"Al-Masad","mn":"The Palm Fiber","rc":1},{"no":112,"en":"Al-Ikhlas","mn":"The Sincerity","rc":1},{"no":113,"en":"Al-Falaq","mn":"The Daybreak","rc":1},{"no":114,"en":"An-Nas","mn":"Mankind","rc":1}],"rukus":[{"id":"s1r1","surah":1,"surahName":"Al-Fatihah","surahMeaning":"The Opening","ruku":1,"rukuOfSurah":1,"juz":1},{"id":"s2r1","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":1,"rukuOfSurah":40,"juz":1},{"id":"s2r2","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":2,"rukuOfSurah":40,"juz":1},{"id":"s2r3","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":3,"rukuOfSurah":40,"juz":1},{"id":"s2r4","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":4,"rukuOfSurah":40,"juz":1},{"id":"s2r5","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":5,"rukuOfSurah":40,"juz":1},{"id":"s2r6","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":6,"rukuOfSurah":40,"juz":1},{"id":"s2r7","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":7,"rukuOfSurah":40,"juz":1},{"id":"s2r8","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":8,"rukuOfSurah":40,"juz":1},{"id":"s2r9","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":9,"rukuOfSurah":40,"juz":1},{"id":"s2r10","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":10,"rukuOfSurah":40,"juz":1},{"id":"s2r11","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":11,"rukuOfSurah":40,"juz":1},{"id":"s2r12","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":12,"rukuOfSurah":40,"juz":1},{"id":"s2r13","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":13,"rukuOfSurah":40,"juz":1},{"id":"s2r14","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":14,"rukuOfSurah":40,"juz":1},{"id":"s2r15","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":15,"rukuOfSurah":40,"juz":1},{"id":"s2r16","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":16,"rukuOfSurah":40,"juz":1},{"id":"s2r17","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":17,"rukuOfSurah":40,"juz":1},{"id":"s2r18","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":18,"rukuOfSurah":40,"juz":1},{"id":"s2r19","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":19,"rukuOfSurah":40,"juz":1},{"id":"s2r20","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":20,"rukuOfSurah":40,"juz":1},{"id":"s2r21","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":21,"rukuOfSurah":40,"juz":1},{"id":"s2r22","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":22,"rukuOfSurah":40,"juz":1},{"id":"s2r23","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":23,"rukuOfSurah":40,"juz":1},{"id":"s2r24","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":24,"rukuOfSurah":40,"juz":1},{"id":"s2r25","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":25,"rukuOfSurah":40,"juz":1},{"id":"s2r26","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":26,"rukuOfSurah":40,"juz":2},{"id":"s2r27","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":27,"rukuOfSurah":40,"juz":2},{"id":"s2r28","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":28,"rukuOfSurah":40,"juz":2},{"id":"s2r29","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":29,"rukuOfSurah":40,"juz":2},{"id":"s2r30","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":30,"rukuOfSurah":40,"juz":2},{"id":"s2r31","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":31,"rukuOfSurah":40,"juz":2},{"id":"s2r32","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":32,"rukuOfSurah":40,"juz":2},{"id":"s2r33","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":33,"rukuOfSurah":40,"juz":2},{"id":"s2r34","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":34,"rukuOfSurah":40,"juz":2},{"id":"s2r35","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":35,"rukuOfSurah":40,"juz":2},{"id":"s2r36","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":36,"rukuOfSurah":40,"juz":2},{"id":"s2r37","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":37,"rukuOfSurah":40,"juz":2},{"id":"s2r38","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":38,"rukuOfSurah":40,"juz":3},{"id":"s2r39","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":39,"rukuOfSurah":40,"juz":3},{"id":"s2r40","surah":2,"surahName":"Al-Baqarah","surahMeaning":"The Cow","ruku":40,"rukuOfSurah":40,"juz":3},{"id":"s3r1","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":1,"rukuOfSurah":20,"juz":3},{"id":"s3r2","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":2,"rukuOfSurah":20,"juz":3},{"id":"s3r3","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":3,"rukuOfSurah":20,"juz":3},{"id":"s3r4","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":4,"rukuOfSurah":20,"juz":3},{"id":"s3r5","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":5,"rukuOfSurah":20,"juz":3},{"id":"s3r6","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":6,"rukuOfSurah":20,"juz":3},{"id":"s3r7","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":7,"rukuOfSurah":20,"juz":3},{"id":"s3r8","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":8,"rukuOfSurah":20,"juz":3},{"id":"s3r9","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":9,"rukuOfSurah":20,"juz":3},{"id":"s3r10","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":10,"rukuOfSurah":20,"juz":3},{"id":"s3r11","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":11,"rukuOfSurah":20,"juz":3},{"id":"s3r12","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":12,"rukuOfSurah":20,"juz":3},{"id":"s3r13","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":13,"rukuOfSurah":20,"juz":3},{"id":"s3r14","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":14,"rukuOfSurah":20,"juz":3},{"id":"s3r15","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":15,"rukuOfSurah":20,"juz":3},{"id":"s3r16","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":16,"rukuOfSurah":20,"juz":4},{"id":"s3r17","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":17,"rukuOfSurah":20,"juz":4},{"id":"s3r18","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":18,"rukuOfSurah":20,"juz":4},{"id":"s3r19","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":19,"rukuOfSurah":20,"juz":4},{"id":"s3r20","surah":3,"surahName":"Aal-e-Imran","surahMeaning":"The Family of Imran","ruku":20,"rukuOfSurah":20,"juz":4},{"id":"s4r1","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":1,"rukuOfSurah":24,"juz":4},{"id":"s4r2","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":2,"rukuOfSurah":24,"juz":4},{"id":"s4r3","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":3,"rukuOfSurah":24,"juz":4},{"id":"s4r4","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":4,"rukuOfSurah":24,"juz":4},{"id":"s4r5","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":5,"rukuOfSurah":24,"juz":4},{"id":"s4r6","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":6,"rukuOfSurah":24,"juz":4},{"id":"s4r7","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":7,"rukuOfSurah":24,"juz":4},{"id":"s4r8","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":8,"rukuOfSurah":24,"juz":4},{"id":"s4r9","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":9,"rukuOfSurah":24,"juz":4},{"id":"s4r10","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":10,"rukuOfSurah":24,"juz":4},{"id":"s4r11","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":11,"rukuOfSurah":24,"juz":4},{"id":"s4r12","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":12,"rukuOfSurah":24,"juz":4},{"id":"s4r13","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":13,"rukuOfSurah":24,"juz":4},{"id":"s4r14","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":14,"rukuOfSurah":24,"juz":4},{"id":"s4r15","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":15,"rukuOfSurah":24,"juz":5},{"id":"s4r16","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":16,"rukuOfSurah":24,"juz":5},{"id":"s4r17","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":17,"rukuOfSurah":24,"juz":5},{"id":"s4r18","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":18,"rukuOfSurah":24,"juz":5},{"id":"s4r19","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":19,"rukuOfSurah":24,"juz":5},{"id":"s4r20","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":20,"rukuOfSurah":24,"juz":5},{"id":"s4r21","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":21,"rukuOfSurah":24,"juz":5},{"id":"s4r22","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":22,"rukuOfSurah":24,"juz":5},{"id":"s4r23","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":23,"rukuOfSurah":24,"juz":5},{"id":"s4r24","surah":4,"surahName":"An-Nisa","surahMeaning":"The Women","ruku":24,"rukuOfSurah":24,"juz":6},{"id":"s5r1","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":1,"rukuOfSurah":16,"juz":6},{"id":"s5r2","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":2,"rukuOfSurah":16,"juz":6},{"id":"s5r3","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":3,"rukuOfSurah":16,"juz":6},{"id":"s5r4","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":4,"rukuOfSurah":16,"juz":6},{"id":"s5r5","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":5,"rukuOfSurah":16,"juz":6},{"id":"s5r6","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":6,"rukuOfSurah":16,"juz":6},{"id":"s5r7","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":7,"rukuOfSurah":16,"juz":6},{"id":"s5r8","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":8,"rukuOfSurah":16,"juz":6},{"id":"s5r9","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":9,"rukuOfSurah":16,"juz":6},{"id":"s5r10","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":10,"rukuOfSurah":16,"juz":6},{"id":"s5r11","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":11,"rukuOfSurah":16,"juz":6},{"id":"s5r12","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":12,"rukuOfSurah":16,"juz":7},{"id":"s5r13","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":13,"rukuOfSurah":16,"juz":7},{"id":"s5r14","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":14,"rukuOfSurah":16,"juz":7},{"id":"s5r15","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":15,"rukuOfSurah":16,"juz":7},{"id":"s5r16","surah":5,"surahName":"Al-Ma'idah","surahMeaning":"The Table Spread","ruku":16,"rukuOfSurah":16,"juz":7},{"id":"s6r1","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":1,"rukuOfSurah":20,"juz":7},{"id":"s6r2","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":2,"rukuOfSurah":20,"juz":7},{"id":"s6r3","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":3,"rukuOfSurah":20,"juz":7},{"id":"s6r4","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":4,"rukuOfSurah":20,"juz":7},{"id":"s6r5","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":5,"rukuOfSurah":20,"juz":7},{"id":"s6r6","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":6,"rukuOfSurah":20,"juz":7},{"id":"s6r7","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":7,"rukuOfSurah":20,"juz":7},{"id":"s6r8","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":8,"rukuOfSurah":20,"juz":7},{"id":"s6r9","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":9,"rukuOfSurah":20,"juz":7},{"id":"s6r10","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":10,"rukuOfSurah":20,"juz":7},{"id":"s6r11","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":11,"rukuOfSurah":20,"juz":7},{"id":"s6r12","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":12,"rukuOfSurah":20,"juz":7},{"id":"s6r13","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":13,"rukuOfSurah":20,"juz":8},{"id":"s6r14","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":14,"rukuOfSurah":20,"juz":8},{"id":"s6r15","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":15,"rukuOfSurah":20,"juz":8},{"id":"s6r16","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":16,"rukuOfSurah":20,"juz":8},{"id":"s6r17","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":17,"rukuOfSurah":20,"juz":8},{"id":"s6r18","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":18,"rukuOfSurah":20,"juz":8},{"id":"s6r19","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":19,"rukuOfSurah":20,"juz":8},{"id":"s6r20","surah":6,"surahName":"Al-An'am","surahMeaning":"The Cattle","ruku":20,"rukuOfSurah":20,"juz":8},{"id":"s7r1","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":1,"rukuOfSurah":24,"juz":8},{"id":"s7r2","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":2,"rukuOfSurah":24,"juz":8},{"id":"s7r3","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":3,"rukuOfSurah":24,"juz":8},{"id":"s7r4","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":4,"rukuOfSurah":24,"juz":8},{"id":"s7r5","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":5,"rukuOfSurah":24,"juz":8},{"id":"s7r6","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":6,"rukuOfSurah":24,"juz":8},{"id":"s7r7","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":7,"rukuOfSurah":24,"juz":8},{"id":"s7r8","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":8,"rukuOfSurah":24,"juz":8},{"id":"s7r9","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":9,"rukuOfSurah":24,"juz":8},{"id":"s7r10","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":10,"rukuOfSurah":24,"juz":8},{"id":"s7r11","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":11,"rukuOfSurah":24,"juz":8},{"id":"s7r12","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":12,"rukuOfSurah":24,"juz":9},{"id":"s7r13","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":13,"rukuOfSurah":24,"juz":9},{"id":"s7r14","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":14,"rukuOfSurah":24,"juz":9},{"id":"s7r15","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":15,"rukuOfSurah":24,"juz":9},{"id":"s7r16","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":16,"rukuOfSurah":24,"juz":9},{"id":"s7r17","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":17,"rukuOfSurah":24,"juz":9},{"id":"s7r18","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":18,"rukuOfSurah":24,"juz":9},{"id":"s7r19","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":19,"rukuOfSurah":24,"juz":9},{"id":"s7r20","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":20,"rukuOfSurah":24,"juz":9},{"id":"s7r21","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":21,"rukuOfSurah":24,"juz":9},{"id":"s7r22","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":22,"rukuOfSurah":24,"juz":9},{"id":"s7r23","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":23,"rukuOfSurah":24,"juz":9},{"id":"s7r24","surah":7,"surahName":"Al-A'raf","surahMeaning":"The Heights","ruku":24,"rukuOfSurah":24,"juz":9},{"id":"s8r1","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":1,"rukuOfSurah":10,"juz":9},{"id":"s8r2","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":2,"rukuOfSurah":10,"juz":9},{"id":"s8r3","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":3,"rukuOfSurah":10,"juz":9},{"id":"s8r4","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":4,"rukuOfSurah":10,"juz":9},{"id":"s8r5","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":5,"rukuOfSurah":10,"juz":9},{"id":"s8r6","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":6,"rukuOfSurah":10,"juz":10},{"id":"s8r7","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":7,"rukuOfSurah":10,"juz":10},{"id":"s8r8","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":8,"rukuOfSurah":10,"juz":10},{"id":"s8r9","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":9,"rukuOfSurah":10,"juz":10},{"id":"s8r10","surah":8,"surahName":"Al-Anfal","surahMeaning":"The Spoils of War","ruku":10,"rukuOfSurah":10,"juz":10},{"id":"s9r1","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":1,"rukuOfSurah":16,"juz":10},{"id":"s9r2","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":2,"rukuOfSurah":16,"juz":10},{"id":"s9r3","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":3,"rukuOfSurah":16,"juz":10},{"id":"s9r4","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":4,"rukuOfSurah":16,"juz":10},{"id":"s9r5","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":5,"rukuOfSurah":16,"juz":10},{"id":"s9r6","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":6,"rukuOfSurah":16,"juz":10},{"id":"s9r7","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":7,"rukuOfSurah":16,"juz":10},{"id":"s9r8","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":8,"rukuOfSurah":16,"juz":10},{"id":"s9r9","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":9,"rukuOfSurah":16,"juz":10},{"id":"s9r10","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":10,"rukuOfSurah":16,"juz":10},{"id":"s9r11","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":11,"rukuOfSurah":16,"juz":11},{"id":"s9r12","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":12,"rukuOfSurah":16,"juz":11},{"id":"s9r13","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":13,"rukuOfSurah":16,"juz":11},{"id":"s9r14","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":14,"rukuOfSurah":16,"juz":11},{"id":"s9r15","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":15,"rukuOfSurah":16,"juz":11},{"id":"s9r16","surah":9,"surahName":"At-Tawbah","surahMeaning":"The Repentance","ruku":16,"rukuOfSurah":16,"juz":11},{"id":"s10r1","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":1,"rukuOfSurah":11,"juz":11},{"id":"s10r2","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":2,"rukuOfSurah":11,"juz":11},{"id":"s10r3","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":3,"rukuOfSurah":11,"juz":11},{"id":"s10r4","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":4,"rukuOfSurah":11,"juz":11},{"id":"s10r5","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":5,"rukuOfSurah":11,"juz":11},{"id":"s10r6","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":6,"rukuOfSurah":11,"juz":11},{"id":"s10r7","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":7,"rukuOfSurah":11,"juz":11},{"id":"s10r8","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":8,"rukuOfSurah":11,"juz":11},{"id":"s10r9","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":9,"rukuOfSurah":11,"juz":11},{"id":"s10r10","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":10,"rukuOfSurah":11,"juz":11},{"id":"s10r11","surah":10,"surahName":"Yunus","surahMeaning":"Jonah","ruku":11,"rukuOfSurah":11,"juz":11},{"id":"s11r1","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":1,"rukuOfSurah":10,"juz":11},{"id":"s11r2","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":2,"rukuOfSurah":10,"juz":11},{"id":"s11r3","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":3,"rukuOfSurah":10,"juz":11},{"id":"s11r4","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":4,"rukuOfSurah":10,"juz":11},{"id":"s11r5","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":5,"rukuOfSurah":10,"juz":11},{"id":"s11r6","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":6,"rukuOfSurah":10,"juz":12},{"id":"s11r7","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":7,"rukuOfSurah":10,"juz":12},{"id":"s11r8","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":8,"rukuOfSurah":10,"juz":12},{"id":"s11r9","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":9,"rukuOfSurah":10,"juz":12},{"id":"s11r10","surah":11,"surahName":"Hud","surahMeaning":"Hud","ruku":10,"rukuOfSurah":10,"juz":12},{"id":"s12r1","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":1,"rukuOfSurah":12,"juz":12},{"id":"s12r2","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":2,"rukuOfSurah":12,"juz":12},{"id":"s12r3","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":3,"rukuOfSurah":12,"juz":12},{"id":"s12r4","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":4,"rukuOfSurah":12,"juz":12},{"id":"s12r5","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":5,"rukuOfSurah":12,"juz":12},{"id":"s12r6","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":6,"rukuOfSurah":12,"juz":12},{"id":"s12r7","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":7,"rukuOfSurah":12,"juz":12},{"id":"s12r8","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":8,"rukuOfSurah":12,"juz":13},{"id":"s12r9","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":9,"rukuOfSurah":12,"juz":13},{"id":"s12r10","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":10,"rukuOfSurah":12,"juz":13},{"id":"s12r11","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":11,"rukuOfSurah":12,"juz":13},{"id":"s12r12","surah":12,"surahName":"Yusuf","surahMeaning":"Joseph","ruku":12,"rukuOfSurah":12,"juz":13},{"id":"s13r1","surah":13,"surahName":"Ar-Ra'd","surahMeaning":"The Thunder","ruku":1,"rukuOfSurah":6,"juz":13},{"id":"s13r2","surah":13,"surahName":"Ar-Ra'd","surahMeaning":"The Thunder","ruku":2,"rukuOfSurah":6,"juz":13},{"id":"s13r3","surah":13,"surahName":"Ar-Ra'd","surahMeaning":"The Thunder","ruku":3,"rukuOfSurah":6,"juz":13},{"id":"s13r4","surah":13,"surahName":"Ar-Ra'd","surahMeaning":"The Thunder","ruku":4,"rukuOfSurah":6,"juz":13},{"id":"s13r5","surah":13,"surahName":"Ar-Ra'd","surahMeaning":"The Thunder","ruku":5,"rukuOfSurah":6,"juz":13},{"id":"s13r6","surah":13,"surahName":"Ar-Ra'd","surahMeaning":"The Thunder","ruku":6,"rukuOfSurah":6,"juz":13},{"id":"s14r1","surah":14,"surahName":"Ibrahim","surahMeaning":"Abraham","ruku":1,"rukuOfSurah":7,"juz":13},{"id":"s14r2","surah":14,"surahName":"Ibrahim","surahMeaning":"Abraham","ruku":2,"rukuOfSurah":7,"juz":13},{"id":"s14r3","surah":14,"surahName":"Ibrahim","surahMeaning":"Abraham","ruku":3,"rukuOfSurah":7,"juz":13},{"id":"s14r4","surah":14,"surahName":"Ibrahim","surahMeaning":"Abraham","ruku":4,"rukuOfSurah":7,"juz":13},{"id":"s14r5","surah":14,"surahName":"Ibrahim","surahMeaning":"Abraham","ruku":5,"rukuOfSurah":7,"juz":13},{"id":"s14r6","surah":14,"surahName":"Ibrahim","surahMeaning":"Abraham","ruku":6,"rukuOfSurah":7,"juz":13},{"id":"s14r7","surah":14,"surahName":"Ibrahim","surahMeaning":"Abraham","ruku":7,"rukuOfSurah":7,"juz":13},{"id":"s15r1","surah":15,"surahName":"Al-Hijr","surahMeaning":"The Rocky Tract","ruku":1,"rukuOfSurah":6,"juz":13},{"id":"s15r2","surah":15,"surahName":"Al-Hijr","surahMeaning":"The Rocky Tract","ruku":2,"rukuOfSurah":6,"juz":14},{"id":"s15r3","surah":15,"surahName":"Al-Hijr","surahMeaning":"The Rocky Tract","ruku":3,"rukuOfSurah":6,"juz":14},{"id":"s15r4","surah":15,"surahName":"Al-Hijr","surahMeaning":"The Rocky Tract","ruku":4,"rukuOfSurah":6,"juz":14},{"id":"s15r5","surah":15,"surahName":"Al-Hijr","surahMeaning":"The Rocky Tract","ruku":5,"rukuOfSurah":6,"juz":14},{"id":"s15r6","surah":15,"surahName":"Al-Hijr","surahMeaning":"The Rocky Tract","ruku":6,"rukuOfSurah":6,"juz":14},{"id":"s16r1","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":1,"rukuOfSurah":16,"juz":14},{"id":"s16r2","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":2,"rukuOfSurah":16,"juz":14},{"id":"s16r3","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":3,"rukuOfSurah":16,"juz":14},{"id":"s16r4","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":4,"rukuOfSurah":16,"juz":14},{"id":"s16r5","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":5,"rukuOfSurah":16,"juz":14},{"id":"s16r6","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":6,"rukuOfSurah":16,"juz":14},{"id":"s16r7","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":7,"rukuOfSurah":16,"juz":14},{"id":"s16r8","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":8,"rukuOfSurah":16,"juz":14},{"id":"s16r9","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":9,"rukuOfSurah":16,"juz":14},{"id":"s16r10","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":10,"rukuOfSurah":16,"juz":14},{"id":"s16r11","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":11,"rukuOfSurah":16,"juz":14},{"id":"s16r12","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":12,"rukuOfSurah":16,"juz":14},{"id":"s16r13","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":13,"rukuOfSurah":16,"juz":14},{"id":"s16r14","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":14,"rukuOfSurah":16,"juz":14},{"id":"s16r15","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":15,"rukuOfSurah":16,"juz":14},{"id":"s16r16","surah":16,"surahName":"An-Nahl","surahMeaning":"The Bee","ruku":16,"rukuOfSurah":16,"juz":14},{"id":"s17r1","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":1,"rukuOfSurah":12,"juz":15},{"id":"s17r2","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":2,"rukuOfSurah":12,"juz":15},{"id":"s17r3","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":3,"rukuOfSurah":12,"juz":15},{"id":"s17r4","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":4,"rukuOfSurah":12,"juz":15},{"id":"s17r5","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":5,"rukuOfSurah":12,"juz":15},{"id":"s17r6","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":6,"rukuOfSurah":12,"juz":15},{"id":"s17r7","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":7,"rukuOfSurah":12,"juz":15},{"id":"s17r8","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":8,"rukuOfSurah":12,"juz":15},{"id":"s17r9","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":9,"rukuOfSurah":12,"juz":15},{"id":"s17r10","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":10,"rukuOfSurah":12,"juz":15},{"id":"s17r11","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":11,"rukuOfSurah":12,"juz":15},{"id":"s17r12","surah":17,"surahName":"Al-Isra","surahMeaning":"The Night Journey","ruku":12,"rukuOfSurah":12,"juz":15},{"id":"s18r1","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":1,"rukuOfSurah":12,"juz":15},{"id":"s18r2","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":2,"rukuOfSurah":12,"juz":15},{"id":"s18r3","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":3,"rukuOfSurah":12,"juz":15},{"id":"s18r4","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":4,"rukuOfSurah":12,"juz":15},{"id":"s18r5","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":5,"rukuOfSurah":12,"juz":15},{"id":"s18r6","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":6,"rukuOfSurah":12,"juz":15},{"id":"s18r7","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":7,"rukuOfSurah":12,"juz":15},{"id":"s18r8","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":8,"rukuOfSurah":12,"juz":16},{"id":"s18r9","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":9,"rukuOfSurah":12,"juz":16},{"id":"s18r10","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":10,"rukuOfSurah":12,"juz":16},{"id":"s18r11","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":11,"rukuOfSurah":12,"juz":16},{"id":"s18r12","surah":18,"surahName":"Al-Kahf","surahMeaning":"The Cave","ruku":12,"rukuOfSurah":12,"juz":16},{"id":"s19r1","surah":19,"surahName":"Maryam","surahMeaning":"Mary","ruku":1,"rukuOfSurah":6,"juz":16},{"id":"s19r2","surah":19,"surahName":"Maryam","surahMeaning":"Mary","ruku":2,"rukuOfSurah":6,"juz":16},{"id":"s19r3","surah":19,"surahName":"Maryam","surahMeaning":"Mary","ruku":3,"rukuOfSurah":6,"juz":16},{"id":"s19r4","surah":19,"surahName":"Maryam","surahMeaning":"Mary","ruku":4,"rukuOfSurah":6,"juz":16},{"id":"s19r5","surah":19,"surahName":"Maryam","surahMeaning":"Mary","ruku":5,"rukuOfSurah":6,"juz":16},{"id":"s19r6","surah":19,"surahName":"Maryam","surahMeaning":"Mary","ruku":6,"rukuOfSurah":6,"juz":16},{"id":"s20r1","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":1,"rukuOfSurah":8,"juz":16},{"id":"s20r2","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":2,"rukuOfSurah":8,"juz":16},{"id":"s20r3","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":3,"rukuOfSurah":8,"juz":16},{"id":"s20r4","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":4,"rukuOfSurah":8,"juz":16},{"id":"s20r5","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":5,"rukuOfSurah":8,"juz":16},{"id":"s20r6","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":6,"rukuOfSurah":8,"juz":16},{"id":"s20r7","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":7,"rukuOfSurah":8,"juz":16},{"id":"s20r8","surah":20,"surahName":"Ta-Ha","surahMeaning":"Ta-Ha","ruku":8,"rukuOfSurah":8,"juz":16},{"id":"s21r1","surah":21,"surahName":"Al-Anbiya","surahMeaning":"The Prophets","ruku":1,"rukuOfSurah":7,"juz":17},{"id":"s21r2","surah":21,"surahName":"Al-Anbiya","surahMeaning":"The Prophets","ruku":2,"rukuOfSurah":7,"juz":17},{"id":"s21r3","surah":21,"surahName":"Al-Anbiya","surahMeaning":"The Prophets","ruku":3,"rukuOfSurah":7,"juz":17},{"id":"s21r4","surah":21,"surahName":"Al-Anbiya","surahMeaning":"The Prophets","ruku":4,"rukuOfSurah":7,"juz":17},{"id":"s21r5","surah":21,"surahName":"Al-Anbiya","surahMeaning":"The Prophets","ruku":5,"rukuOfSurah":7,"juz":17},{"id":"s21r6","surah":21,"surahName":"Al-Anbiya","surahMeaning":"The Prophets","ruku":6,"rukuOfSurah":7,"juz":17},{"id":"s21r7","surah":21,"surahName":"Al-Anbiya","surahMeaning":"The Prophets","ruku":7,"rukuOfSurah":7,"juz":17},{"id":"s22r1","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":1,"rukuOfSurah":10,"juz":17},{"id":"s22r2","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":2,"rukuOfSurah":10,"juz":17},{"id":"s22r3","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":3,"rukuOfSurah":10,"juz":17},{"id":"s22r4","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":4,"rukuOfSurah":10,"juz":17},{"id":"s22r5","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":5,"rukuOfSurah":10,"juz":17},{"id":"s22r6","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":6,"rukuOfSurah":10,"juz":17},{"id":"s22r7","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":7,"rukuOfSurah":10,"juz":17},{"id":"s22r8","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":8,"rukuOfSurah":10,"juz":17},{"id":"s22r9","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":9,"rukuOfSurah":10,"juz":17},{"id":"s22r10","surah":22,"surahName":"Al-Hajj","surahMeaning":"The Pilgrimage","ruku":10,"rukuOfSurah":10,"juz":17},{"id":"s23r1","surah":23,"surahName":"Al-Mu'minun","surahMeaning":"The Believers","ruku":1,"rukuOfSurah":6,"juz":18},{"id":"s23r2","surah":23,"surahName":"Al-Mu'minun","surahMeaning":"The Believers","ruku":2,"rukuOfSurah":6,"juz":18},{"id":"s23r3","surah":23,"surahName":"Al-Mu'minun","surahMeaning":"The Believers","ruku":3,"rukuOfSurah":6,"juz":18},{"id":"s23r4","surah":23,"surahName":"Al-Mu'minun","surahMeaning":"The Believers","ruku":4,"rukuOfSurah":6,"juz":18},{"id":"s23r5","surah":23,"surahName":"Al-Mu'minun","surahMeaning":"The Believers","ruku":5,"rukuOfSurah":6,"juz":18},{"id":"s23r6","surah":23,"surahName":"Al-Mu'minun","surahMeaning":"The Believers","ruku":6,"rukuOfSurah":6,"juz":18},{"id":"s24r1","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":1,"rukuOfSurah":9,"juz":18},{"id":"s24r2","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":2,"rukuOfSurah":9,"juz":18},{"id":"s24r3","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":3,"rukuOfSurah":9,"juz":18},{"id":"s24r4","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":4,"rukuOfSurah":9,"juz":18},{"id":"s24r5","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":5,"rukuOfSurah":9,"juz":18},{"id":"s24r6","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":6,"rukuOfSurah":9,"juz":18},{"id":"s24r7","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":7,"rukuOfSurah":9,"juz":18},{"id":"s24r8","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":8,"rukuOfSurah":9,"juz":18},{"id":"s24r9","surah":24,"surahName":"An-Nur","surahMeaning":"The Light","ruku":9,"rukuOfSurah":9,"juz":18},{"id":"s25r1","surah":25,"surahName":"Al-Furqan","surahMeaning":"The Criterion","ruku":1,"rukuOfSurah":6,"juz":18},{"id":"s25r2","surah":25,"surahName":"Al-Furqan","surahMeaning":"The Criterion","ruku":2,"rukuOfSurah":6,"juz":18},{"id":"s25r3","surah":25,"surahName":"Al-Furqan","surahMeaning":"The Criterion","ruku":3,"rukuOfSurah":6,"juz":19},{"id":"s25r4","surah":25,"surahName":"Al-Furqan","surahMeaning":"The Criterion","ruku":4,"rukuOfSurah":6,"juz":19},{"id":"s25r5","surah":25,"surahName":"Al-Furqan","surahMeaning":"The Criterion","ruku":5,"rukuOfSurah":6,"juz":19},{"id":"s25r6","surah":25,"surahName":"Al-Furqan","surahMeaning":"The Criterion","ruku":6,"rukuOfSurah":6,"juz":19},{"id":"s26r1","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":1,"rukuOfSurah":11,"juz":19},{"id":"s26r2","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":2,"rukuOfSurah":11,"juz":19},{"id":"s26r3","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":3,"rukuOfSurah":11,"juz":19},{"id":"s26r4","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":4,"rukuOfSurah":11,"juz":19},{"id":"s26r5","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":5,"rukuOfSurah":11,"juz":19},{"id":"s26r6","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":6,"rukuOfSurah":11,"juz":19},{"id":"s26r7","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":7,"rukuOfSurah":11,"juz":19},{"id":"s26r8","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":8,"rukuOfSurah":11,"juz":19},{"id":"s26r9","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":9,"rukuOfSurah":11,"juz":19},{"id":"s26r10","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":10,"rukuOfSurah":11,"juz":19},{"id":"s26r11","surah":26,"surahName":"Ash-Shu'ara","surahMeaning":"The Poets","ruku":11,"rukuOfSurah":11,"juz":19},{"id":"s27r1","surah":27,"surahName":"An-Naml","surahMeaning":"The Ant","ruku":1,"rukuOfSurah":7,"juz":19},{"id":"s27r2","surah":27,"surahName":"An-Naml","surahMeaning":"The Ant","ruku":2,"rukuOfSurah":7,"juz":19},{"id":"s27r3","surah":27,"surahName":"An-Naml","surahMeaning":"The Ant","ruku":3,"rukuOfSurah":7,"juz":19},{"id":"s27r4","surah":27,"surahName":"An-Naml","surahMeaning":"The Ant","ruku":4,"rukuOfSurah":7,"juz":19},{"id":"s27r5","surah":27,"surahName":"An-Naml","surahMeaning":"The Ant","ruku":5,"rukuOfSurah":7,"juz":20},{"id":"s27r6","surah":27,"surahName":"An-Naml","surahMeaning":"The Ant","ruku":6,"rukuOfSurah":7,"juz":20},{"id":"s27r7","surah":27,"surahName":"An-Naml","surahMeaning":"The Ant","ruku":7,"rukuOfSurah":7,"juz":20},{"id":"s28r1","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":1,"rukuOfSurah":9,"juz":20},{"id":"s28r2","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":2,"rukuOfSurah":9,"juz":20},{"id":"s28r3","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":3,"rukuOfSurah":9,"juz":20},{"id":"s28r4","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":4,"rukuOfSurah":9,"juz":20},{"id":"s28r5","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":5,"rukuOfSurah":9,"juz":20},{"id":"s28r6","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":6,"rukuOfSurah":9,"juz":20},{"id":"s28r7","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":7,"rukuOfSurah":9,"juz":20},{"id":"s28r8","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":8,"rukuOfSurah":9,"juz":20},{"id":"s28r9","surah":28,"surahName":"Al-Qasas","surahMeaning":"The Stories","ruku":9,"rukuOfSurah":9,"juz":20},{"id":"s29r1","surah":29,"surahName":"Al-Ankabut","surahMeaning":"The Spider","ruku":1,"rukuOfSurah":7,"juz":20},{"id":"s29r2","surah":29,"surahName":"Al-Ankabut","surahMeaning":"The Spider","ruku":2,"rukuOfSurah":7,"juz":20},{"id":"s29r3","surah":29,"surahName":"Al-Ankabut","surahMeaning":"The Spider","ruku":3,"rukuOfSurah":7,"juz":20},{"id":"s29r4","surah":29,"surahName":"Al-Ankabut","surahMeaning":"The Spider","ruku":4,"rukuOfSurah":7,"juz":21},{"id":"s29r5","surah":29,"surahName":"Al-Ankabut","surahMeaning":"The Spider","ruku":5,"rukuOfSurah":7,"juz":21},{"id":"s29r6","surah":29,"surahName":"Al-Ankabut","surahMeaning":"The Spider","ruku":6,"rukuOfSurah":7,"juz":21},{"id":"s29r7","surah":29,"surahName":"Al-Ankabut","surahMeaning":"The Spider","ruku":7,"rukuOfSurah":7,"juz":21},{"id":"s30r1","surah":30,"surahName":"Ar-Rum","surahMeaning":"The Romans","ruku":1,"rukuOfSurah":6,"juz":21},{"id":"s30r2","surah":30,"surahName":"Ar-Rum","surahMeaning":"The Romans","ruku":2,"rukuOfSurah":6,"juz":21},{"id":"s30r3","surah":30,"surahName":"Ar-Rum","surahMeaning":"The Romans","ruku":3,"rukuOfSurah":6,"juz":21},{"id":"s30r4","surah":30,"surahName":"Ar-Rum","surahMeaning":"The Romans","ruku":4,"rukuOfSurah":6,"juz":21},{"id":"s30r5","surah":30,"surahName":"Ar-Rum","surahMeaning":"The Romans","ruku":5,"rukuOfSurah":6,"juz":21},{"id":"s30r6","surah":30,"surahName":"Ar-Rum","surahMeaning":"The Romans","ruku":6,"rukuOfSurah":6,"juz":21},{"id":"s31r1","surah":31,"surahName":"Luqman","surahMeaning":"Luqman","ruku":1,"rukuOfSurah":4,"juz":21},{"id":"s31r2","surah":31,"surahName":"Luqman","surahMeaning":"Luqman","ruku":2,"rukuOfSurah":4,"juz":21},{"id":"s31r3","surah":31,"surahName":"Luqman","surahMeaning":"Luqman","ruku":3,"rukuOfSurah":4,"juz":21},{"id":"s31r4","surah":31,"surahName":"Luqman","surahMeaning":"Luqman","ruku":4,"rukuOfSurah":4,"juz":21},{"id":"s32r1","surah":32,"surahName":"As-Sajdah","surahMeaning":"The Prostration","ruku":1,"rukuOfSurah":3,"juz":21},{"id":"s32r2","surah":32,"surahName":"As-Sajdah","surahMeaning":"The Prostration","ruku":2,"rukuOfSurah":3,"juz":21},{"id":"s32r3","surah":32,"surahName":"As-Sajdah","surahMeaning":"The Prostration","ruku":3,"rukuOfSurah":3,"juz":21},{"id":"s33r1","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":1,"rukuOfSurah":9,"juz":22},{"id":"s33r2","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":2,"rukuOfSurah":9,"juz":22},{"id":"s33r3","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":3,"rukuOfSurah":9,"juz":22},{"id":"s33r4","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":4,"rukuOfSurah":9,"juz":22},{"id":"s33r5","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":5,"rukuOfSurah":9,"juz":22},{"id":"s33r6","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":6,"rukuOfSurah":9,"juz":22},{"id":"s33r7","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":7,"rukuOfSurah":9,"juz":22},{"id":"s33r8","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":8,"rukuOfSurah":9,"juz":22},{"id":"s33r9","surah":33,"surahName":"Al-Ahzab","surahMeaning":"The Combined Forces","ruku":9,"rukuOfSurah":9,"juz":22},{"id":"s34r1","surah":34,"surahName":"Saba","surahMeaning":"Sheba","ruku":1,"rukuOfSurah":6,"juz":22},{"id":"s34r2","surah":34,"surahName":"Saba","surahMeaning":"Sheba","ruku":2,"rukuOfSurah":6,"juz":22},{"id":"s34r3","surah":34,"surahName":"Saba","surahMeaning":"Sheba","ruku":3,"rukuOfSurah":6,"juz":22},{"id":"s34r4","surah":34,"surahName":"Saba","surahMeaning":"Sheba","ruku":4,"rukuOfSurah":6,"juz":22},{"id":"s34r5","surah":34,"surahName":"Saba","surahMeaning":"Sheba","ruku":5,"rukuOfSurah":6,"juz":22},{"id":"s34r6","surah":34,"surahName":"Saba","surahMeaning":"Sheba","ruku":6,"rukuOfSurah":6,"juz":22},{"id":"s35r1","surah":35,"surahName":"Fatir","surahMeaning":"Originator","ruku":1,"rukuOfSurah":5,"juz":22},{"id":"s35r2","surah":35,"surahName":"Fatir","surahMeaning":"Originator","ruku":2,"rukuOfSurah":5,"juz":22},{"id":"s35r3","surah":35,"surahName":"Fatir","surahMeaning":"Originator","ruku":3,"rukuOfSurah":5,"juz":22},{"id":"s35r4","surah":35,"surahName":"Fatir","surahMeaning":"Originator","ruku":4,"rukuOfSurah":5,"juz":22},{"id":"s35r5","surah":35,"surahName":"Fatir","surahMeaning":"Originator","ruku":5,"rukuOfSurah":5,"juz":22},{"id":"s36r1","surah":36,"surahName":"Ya-Sin","surahMeaning":"Ya-Sin","ruku":1,"rukuOfSurah":5,"juz":22},{"id":"s36r2","surah":36,"surahName":"Ya-Sin","surahMeaning":"Ya-Sin","ruku":2,"rukuOfSurah":5,"juz":22},{"id":"s36r3","surah":36,"surahName":"Ya-Sin","surahMeaning":"Ya-Sin","ruku":3,"rukuOfSurah":5,"juz":22},{"id":"s36r4","surah":36,"surahName":"Ya-Sin","surahMeaning":"Ya-Sin","ruku":4,"rukuOfSurah":5,"juz":23},{"id":"s36r5","surah":36,"surahName":"Ya-Sin","surahMeaning":"Ya-Sin","ruku":5,"rukuOfSurah":5,"juz":23},{"id":"s37r1","surah":37,"surahName":"As-Saffat","surahMeaning":"Those Who Set the Ranks","ruku":1,"rukuOfSurah":5,"juz":23},{"id":"s37r2","surah":37,"surahName":"As-Saffat","surahMeaning":"Those Who Set the Ranks","ruku":2,"rukuOfSurah":5,"juz":23},{"id":"s37r3","surah":37,"surahName":"As-Saffat","surahMeaning":"Those Who Set the Ranks","ruku":3,"rukuOfSurah":5,"juz":23},{"id":"s37r4","surah":37,"surahName":"As-Saffat","surahMeaning":"Those Who Set the Ranks","ruku":4,"rukuOfSurah":5,"juz":23},{"id":"s37r5","surah":37,"surahName":"As-Saffat","surahMeaning":"Those Who Set the Ranks","ruku":5,"rukuOfSurah":5,"juz":23},{"id":"s38r1","surah":38,"surahName":"Sad","surahMeaning":"Sad","ruku":1,"rukuOfSurah":5,"juz":23},{"id":"s38r2","surah":38,"surahName":"Sad","surahMeaning":"Sad","ruku":2,"rukuOfSurah":5,"juz":23},{"id":"s38r3","surah":38,"surahName":"Sad","surahMeaning":"Sad","ruku":3,"rukuOfSurah":5,"juz":23},{"id":"s38r4","surah":38,"surahName":"Sad","surahMeaning":"Sad","ruku":4,"rukuOfSurah":5,"juz":23},{"id":"s38r5","surah":38,"surahName":"Sad","surahMeaning":"Sad","ruku":5,"rukuOfSurah":5,"juz":23},{"id":"s39r1","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":1,"rukuOfSurah":8,"juz":23},{"id":"s39r2","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":2,"rukuOfSurah":8,"juz":23},{"id":"s39r3","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":3,"rukuOfSurah":8,"juz":23},{"id":"s39r4","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":4,"rukuOfSurah":8,"juz":23},{"id":"s39r5","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":5,"rukuOfSurah":8,"juz":23},{"id":"s39r6","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":6,"rukuOfSurah":8,"juz":24},{"id":"s39r7","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":7,"rukuOfSurah":8,"juz":24},{"id":"s39r8","surah":39,"surahName":"Az-Zumar","surahMeaning":"The Troops","ruku":8,"rukuOfSurah":8,"juz":24},{"id":"s40r1","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":1,"rukuOfSurah":9,"juz":24},{"id":"s40r2","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":2,"rukuOfSurah":9,"juz":24},{"id":"s40r3","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":3,"rukuOfSurah":9,"juz":24},{"id":"s40r4","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":4,"rukuOfSurah":9,"juz":24},{"id":"s40r5","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":5,"rukuOfSurah":9,"juz":24},{"id":"s40r6","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":6,"rukuOfSurah":9,"juz":24},{"id":"s40r7","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":7,"rukuOfSurah":9,"juz":24},{"id":"s40r8","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":8,"rukuOfSurah":9,"juz":24},{"id":"s40r9","surah":40,"surahName":"Ghafir","surahMeaning":"The Forgiver","ruku":9,"rukuOfSurah":9,"juz":24},{"id":"s41r1","surah":41,"surahName":"Fussilat","surahMeaning":"Explained in Detail","ruku":1,"rukuOfSurah":6,"juz":24},{"id":"s41r2","surah":41,"surahName":"Fussilat","surahMeaning":"Explained in Detail","ruku":2,"rukuOfSurah":6,"juz":24},{"id":"s41r3","surah":41,"surahName":"Fussilat","surahMeaning":"Explained in Detail","ruku":3,"rukuOfSurah":6,"juz":25},{"id":"s41r4","surah":41,"surahName":"Fussilat","surahMeaning":"Explained in Detail","ruku":4,"rukuOfSurah":6,"juz":25},{"id":"s41r5","surah":41,"surahName":"Fussilat","surahMeaning":"Explained in Detail","ruku":5,"rukuOfSurah":6,"juz":25},{"id":"s41r6","surah":41,"surahName":"Fussilat","surahMeaning":"Explained in Detail","ruku":6,"rukuOfSurah":6,"juz":25},{"id":"s42r1","surah":42,"surahName":"Ash-Shura","surahMeaning":"The Consultation","ruku":1,"rukuOfSurah":5,"juz":25},{"id":"s42r2","surah":42,"surahName":"Ash-Shura","surahMeaning":"The Consultation","ruku":2,"rukuOfSurah":5,"juz":25},{"id":"s42r3","surah":42,"surahName":"Ash-Shura","surahMeaning":"The Consultation","ruku":3,"rukuOfSurah":5,"juz":25},{"id":"s42r4","surah":42,"surahName":"Ash-Shura","surahMeaning":"The Consultation","ruku":4,"rukuOfSurah":5,"juz":25},{"id":"s42r5","surah":42,"surahName":"Ash-Shura","surahMeaning":"The Consultation","ruku":5,"rukuOfSurah":5,"juz":25},{"id":"s43r1","surah":43,"surahName":"Az-Zukhruf","surahMeaning":"The Ornaments of Gold","ruku":1,"rukuOfSurah":7,"juz":25},{"id":"s43r2","surah":43,"surahName":"Az-Zukhruf","surahMeaning":"The Ornaments of Gold","ruku":2,"rukuOfSurah":7,"juz":25},{"id":"s43r3","surah":43,"surahName":"Az-Zukhruf","surahMeaning":"The Ornaments of Gold","ruku":3,"rukuOfSurah":7,"juz":25},{"id":"s43r4","surah":43,"surahName":"Az-Zukhruf","surahMeaning":"The Ornaments of Gold","ruku":4,"rukuOfSurah":7,"juz":25},{"id":"s43r5","surah":43,"surahName":"Az-Zukhruf","surahMeaning":"The Ornaments of Gold","ruku":5,"rukuOfSurah":7,"juz":25},{"id":"s43r6","surah":43,"surahName":"Az-Zukhruf","surahMeaning":"The Ornaments of Gold","ruku":6,"rukuOfSurah":7,"juz":25},{"id":"s43r7","surah":43,"surahName":"Az-Zukhruf","surahMeaning":"The Ornaments of Gold","ruku":7,"rukuOfSurah":7,"juz":25},{"id":"s44r1","surah":44,"surahName":"Ad-Dukhan","surahMeaning":"The Smoke","ruku":1,"rukuOfSurah":3,"juz":25},{"id":"s44r2","surah":44,"surahName":"Ad-Dukhan","surahMeaning":"The Smoke","ruku":2,"rukuOfSurah":3,"juz":25},{"id":"s44r3","surah":44,"surahName":"Ad-Dukhan","surahMeaning":"The Smoke","ruku":3,"rukuOfSurah":3,"juz":25},{"id":"s45r1","surah":45,"surahName":"Al-Jathiyah","surahMeaning":"The Crouching","ruku":1,"rukuOfSurah":4,"juz":25},{"id":"s45r2","surah":45,"surahName":"Al-Jathiyah","surahMeaning":"The Crouching","ruku":2,"rukuOfSurah":4,"juz":25},{"id":"s45r3","surah":45,"surahName":"Al-Jathiyah","surahMeaning":"The Crouching","ruku":3,"rukuOfSurah":4,"juz":25},{"id":"s45r4","surah":45,"surahName":"Al-Jathiyah","surahMeaning":"The Crouching","ruku":4,"rukuOfSurah":4,"juz":25},{"id":"s46r1","surah":46,"surahName":"Al-Ahqaf","surahMeaning":"The Wind-Curved Sandhills","ruku":1,"rukuOfSurah":4,"juz":26},{"id":"s46r2","surah":46,"surahName":"Al-Ahqaf","surahMeaning":"The Wind-Curved Sandhills","ruku":2,"rukuOfSurah":4,"juz":26},{"id":"s46r3","surah":46,"surahName":"Al-Ahqaf","surahMeaning":"The Wind-Curved Sandhills","ruku":3,"rukuOfSurah":4,"juz":26},{"id":"s46r4","surah":46,"surahName":"Al-Ahqaf","surahMeaning":"The Wind-Curved Sandhills","ruku":4,"rukuOfSurah":4,"juz":26},{"id":"s47r1","surah":47,"surahName":"Muhammad","surahMeaning":"Muhammad","ruku":1,"rukuOfSurah":4,"juz":26},{"id":"s47r2","surah":47,"surahName":"Muhammad","surahMeaning":"Muhammad","ruku":2,"rukuOfSurah":4,"juz":26},{"id":"s47r3","surah":47,"surahName":"Muhammad","surahMeaning":"Muhammad","ruku":3,"rukuOfSurah":4,"juz":26},{"id":"s47r4","surah":47,"surahName":"Muhammad","surahMeaning":"Muhammad","ruku":4,"rukuOfSurah":4,"juz":26},{"id":"s48r1","surah":48,"surahName":"Al-Fath","surahMeaning":"The Victory","ruku":1,"rukuOfSurah":4,"juz":26},{"id":"s48r2","surah":48,"surahName":"Al-Fath","surahMeaning":"The Victory","ruku":2,"rukuOfSurah":4,"juz":26},{"id":"s48r3","surah":48,"surahName":"Al-Fath","surahMeaning":"The Victory","ruku":3,"rukuOfSurah":4,"juz":26},{"id":"s48r4","surah":48,"surahName":"Al-Fath","surahMeaning":"The Victory","ruku":4,"rukuOfSurah":4,"juz":26},{"id":"s49r1","surah":49,"surahName":"Al-Hujurat","surahMeaning":"The Rooms","ruku":1,"rukuOfSurah":2,"juz":26},{"id":"s49r2","surah":49,"surahName":"Al-Hujurat","surahMeaning":"The Rooms","ruku":2,"rukuOfSurah":2,"juz":26},{"id":"s50r1","surah":50,"surahName":"Qaf","surahMeaning":"Qaf","ruku":1,"rukuOfSurah":3,"juz":26},{"id":"s50r2","surah":50,"surahName":"Qaf","surahMeaning":"Qaf","ruku":2,"rukuOfSurah":3,"juz":26},{"id":"s50r3","surah":50,"surahName":"Qaf","surahMeaning":"Qaf","ruku":3,"rukuOfSurah":3,"juz":26},{"id":"s51r1","surah":51,"surahName":"Adh-Dhariyat","surahMeaning":"The Winnowing Winds","ruku":1,"rukuOfSurah":3,"juz":26},{"id":"s51r2","surah":51,"surahName":"Adh-Dhariyat","surahMeaning":"The Winnowing Winds","ruku":2,"rukuOfSurah":3,"juz":27},{"id":"s51r3","surah":51,"surahName":"Adh-Dhariyat","surahMeaning":"The Winnowing Winds","ruku":3,"rukuOfSurah":3,"juz":27},{"id":"s52r1","surah":52,"surahName":"At-Tur","surahMeaning":"The Mount","ruku":1,"rukuOfSurah":2,"juz":27},{"id":"s52r2","surah":52,"surahName":"At-Tur","surahMeaning":"The Mount","ruku":2,"rukuOfSurah":2,"juz":27},{"id":"s53r1","surah":53,"surahName":"An-Najm","surahMeaning":"The Star","ruku":1,"rukuOfSurah":3,"juz":27},{"id":"s53r2","surah":53,"surahName":"An-Najm","surahMeaning":"The Star","ruku":2,"rukuOfSurah":3,"juz":27},{"id":"s53r3","surah":53,"surahName":"An-Najm","surahMeaning":"The Star","ruku":3,"rukuOfSurah":3,"juz":27},{"id":"s54r1","surah":54,"surahName":"Al-Qamar","surahMeaning":"The Moon","ruku":1,"rukuOfSurah":3,"juz":27},{"id":"s54r2","surah":54,"surahName":"Al-Qamar","surahMeaning":"The Moon","ruku":2,"rukuOfSurah":3,"juz":27},{"id":"s54r3","surah":54,"surahName":"Al-Qamar","surahMeaning":"The Moon","ruku":3,"rukuOfSurah":3,"juz":27},{"id":"s55r1","surah":55,"surahName":"Ar-Rahman","surahMeaning":"The Beneficent","ruku":1,"rukuOfSurah":3,"juz":27},{"id":"s55r2","surah":55,"surahName":"Ar-Rahman","surahMeaning":"The Beneficent","ruku":2,"rukuOfSurah":3,"juz":27},{"id":"s55r3","surah":55,"surahName":"Ar-Rahman","surahMeaning":"The Beneficent","ruku":3,"rukuOfSurah":3,"juz":27},{"id":"s56r1","surah":56,"surahName":"Al-Waqi'ah","surahMeaning":"The Inevitable","ruku":1,"rukuOfSurah":3,"juz":27},{"id":"s56r2","surah":56,"surahName":"Al-Waqi'ah","surahMeaning":"The Inevitable","ruku":2,"rukuOfSurah":3,"juz":27},{"id":"s56r3","surah":56,"surahName":"Al-Waqi'ah","surahMeaning":"The Inevitable","ruku":3,"rukuOfSurah":3,"juz":27},{"id":"s57r1","surah":57,"surahName":"Al-Hadid","surahMeaning":"The Iron","ruku":1,"rukuOfSurah":4,"juz":27},{"id":"s57r2","surah":57,"surahName":"Al-Hadid","surahMeaning":"The Iron","ruku":2,"rukuOfSurah":4,"juz":27},{"id":"s57r3","surah":57,"surahName":"Al-Hadid","surahMeaning":"The Iron","ruku":3,"rukuOfSurah":4,"juz":27},{"id":"s57r4","surah":57,"surahName":"Al-Hadid","surahMeaning":"The Iron","ruku":4,"rukuOfSurah":4,"juz":27},{"id":"s58r1","surah":58,"surahName":"Al-Mujadilah","surahMeaning":"The Pleading Woman","ruku":1,"rukuOfSurah":3,"juz":28},{"id":"s58r2","surah":58,"surahName":"Al-Mujadilah","surahMeaning":"The Pleading Woman","ruku":2,"rukuOfSurah":3,"juz":28},{"id":"s58r3","surah":58,"surahName":"Al-Mujadilah","surahMeaning":"The Pleading Woman","ruku":3,"rukuOfSurah":3,"juz":28},{"id":"s59r1","surah":59,"surahName":"Al-Hashr","surahMeaning":"The Exile","ruku":1,"rukuOfSurah":3,"juz":28},{"id":"s59r2","surah":59,"surahName":"Al-Hashr","surahMeaning":"The Exile","ruku":2,"rukuOfSurah":3,"juz":28},{"id":"s59r3","surah":59,"surahName":"Al-Hashr","surahMeaning":"The Exile","ruku":3,"rukuOfSurah":3,"juz":28},{"id":"s60r1","surah":60,"surahName":"Al-Mumtahanah","surahMeaning":"She That Is to Be Examined","ruku":1,"rukuOfSurah":2,"juz":28},{"id":"s60r2","surah":60,"surahName":"Al-Mumtahanah","surahMeaning":"She That Is to Be Examined","ruku":2,"rukuOfSurah":2,"juz":28},{"id":"s61r1","surah":61,"surahName":"As-Saff","surahMeaning":"The Ranks","ruku":1,"rukuOfSurah":2,"juz":28},{"id":"s61r2","surah":61,"surahName":"As-Saff","surahMeaning":"The Ranks","ruku":2,"rukuOfSurah":2,"juz":28},{"id":"s62r1","surah":62,"surahName":"Al-Jumu'ah","surahMeaning":"Friday","ruku":1,"rukuOfSurah":2,"juz":28},{"id":"s62r2","surah":62,"surahName":"Al-Jumu'ah","surahMeaning":"Friday","ruku":2,"rukuOfSurah":2,"juz":28},{"id":"s63r1","surah":63,"surahName":"Al-Munafiqun","surahMeaning":"The Hypocrites","ruku":1,"rukuOfSurah":2,"juz":28},{"id":"s63r2","surah":63,"surahName":"Al-Munafiqun","surahMeaning":"The Hypocrites","ruku":2,"rukuOfSurah":2,"juz":28},{"id":"s64r1","surah":64,"surahName":"At-Taghabun","surahMeaning":"The Mutual Disillusion","ruku":1,"rukuOfSurah":2,"juz":28},{"id":"s64r2","surah":64,"surahName":"At-Taghabun","surahMeaning":"The Mutual Disillusion","ruku":2,"rukuOfSurah":2,"juz":28},{"id":"s65r1","surah":65,"surahName":"At-Talaq","surahMeaning":"The Divorce","ruku":1,"rukuOfSurah":2,"juz":28},{"id":"s65r2","surah":65,"surahName":"At-Talaq","surahMeaning":"The Divorce","ruku":2,"rukuOfSurah":2,"juz":28},{"id":"s66r1","surah":66,"surahName":"At-Tahrim","surahMeaning":"The Prohibition","ruku":1,"rukuOfSurah":2,"juz":28},{"id":"s66r2","surah":66,"surahName":"At-Tahrim","surahMeaning":"The Prohibition","ruku":2,"rukuOfSurah":2,"juz":28},{"id":"s67r1","surah":67,"surahName":"Al-Mulk","surahMeaning":"The Sovereignty","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s67r2","surah":67,"surahName":"Al-Mulk","surahMeaning":"The Sovereignty","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s68r1","surah":68,"surahName":"Al-Qalam","surahMeaning":"The Pen","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s68r2","surah":68,"surahName":"Al-Qalam","surahMeaning":"The Pen","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s69r1","surah":69,"surahName":"Al-Haqqah","surahMeaning":"The Reality","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s69r2","surah":69,"surahName":"Al-Haqqah","surahMeaning":"The Reality","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s70r1","surah":70,"surahName":"Al-Ma'arij","surahMeaning":"The Ascending Stairways","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s70r2","surah":70,"surahName":"Al-Ma'arij","surahMeaning":"The Ascending Stairways","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s71r1","surah":71,"surahName":"Nuh","surahMeaning":"Noah","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s71r2","surah":71,"surahName":"Nuh","surahMeaning":"Noah","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s72r1","surah":72,"surahName":"Al-Jinn","surahMeaning":"The Jinn","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s72r2","surah":72,"surahName":"Al-Jinn","surahMeaning":"The Jinn","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s73r1","surah":73,"surahName":"Al-Muzzammil","surahMeaning":"The Enshrouded One","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s73r2","surah":73,"surahName":"Al-Muzzammil","surahMeaning":"The Enshrouded One","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s74r1","surah":74,"surahName":"Al-Muddaththir","surahMeaning":"The Cloaked One","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s74r2","surah":74,"surahName":"Al-Muddaththir","surahMeaning":"The Cloaked One","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s75r1","surah":75,"surahName":"Al-Qiyamah","surahMeaning":"The Resurrection","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s75r2","surah":75,"surahName":"Al-Qiyamah","surahMeaning":"The Resurrection","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s76r1","surah":76,"surahName":"Al-Insan","surahMeaning":"The Man","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s76r2","surah":76,"surahName":"Al-Insan","surahMeaning":"The Man","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s77r1","surah":77,"surahName":"Al-Mursalat","surahMeaning":"The Emissaries","ruku":1,"rukuOfSurah":2,"juz":29},{"id":"s77r2","surah":77,"surahName":"Al-Mursalat","surahMeaning":"The Emissaries","ruku":2,"rukuOfSurah":2,"juz":29},{"id":"s78r1","surah":78,"surahName":"An-Naba","surahMeaning":"The Tidings","ruku":1,"rukuOfSurah":2,"juz":30},{"id":"s78r2","surah":78,"surahName":"An-Naba","surahMeaning":"The Tidings","ruku":2,"rukuOfSurah":2,"juz":30},{"id":"s79r1","surah":79,"surahName":"An-Nazi'at","surahMeaning":"Those Who Drag Forth","ruku":1,"rukuOfSurah":2,"juz":30},{"id":"s79r2","surah":79,"surahName":"An-Nazi'at","surahMeaning":"Those Who Drag Forth","ruku":2,"rukuOfSurah":2,"juz":30},{"id":"s80r1","surah":80,"surahName":"Abasa","surahMeaning":"He Frowned","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s81r1","surah":81,"surahName":"At-Takwir","surahMeaning":"The Overthrowing","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s82r1","surah":82,"surahName":"Al-Infitar","surahMeaning":"The Cleaving","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s83r1","surah":83,"surahName":"Al-Mutaffifin","surahMeaning":"The Defrauding","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s84r1","surah":84,"surahName":"Al-Inshiqaq","surahMeaning":"The Sundering","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s85r1","surah":85,"surahName":"Al-Buruj","surahMeaning":"The Mansions of the Stars","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s86r1","surah":86,"surahName":"At-Tariq","surahMeaning":"The Morning Star","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s87r1","surah":87,"surahName":"Al-A'la","surahMeaning":"The Most High","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s88r1","surah":88,"surahName":"Al-Ghashiyah","surahMeaning":"The Overwhelming","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s89r1","surah":89,"surahName":"Al-Fajr","surahMeaning":"The Dawn","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s90r1","surah":90,"surahName":"Al-Balad","surahMeaning":"The City","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s91r1","surah":91,"surahName":"Ash-Shams","surahMeaning":"The Sun","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s92r1","surah":92,"surahName":"Al-Lail","surahMeaning":"The Night","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s93r1","surah":93,"surahName":"Ad-Duha","surahMeaning":"The Morning Hours","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s94r1","surah":94,"surahName":"Ash-Sharh","surahMeaning":"The Relief","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s95r1","surah":95,"surahName":"At-Tin","surahMeaning":"The Fig","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s96r1","surah":96,"surahName":"Al-Alaq","surahMeaning":"The Clot","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s97r1","surah":97,"surahName":"Al-Qadr","surahMeaning":"The Power","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s98r1","surah":98,"surahName":"Al-Bayyinah","surahMeaning":"The Clear Proof","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s99r1","surah":99,"surahName":"Az-Zalzalah","surahMeaning":"The Earthquake","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s100r1","surah":100,"surahName":"Al-Adiyat","surahMeaning":"The Courser","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s101r1","surah":101,"surahName":"Al-Qari'ah","surahMeaning":"The Calamity","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s102r1","surah":102,"surahName":"At-Takathur","surahMeaning":"The Rivalry in World Increase","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s103r1","surah":103,"surahName":"Al-Asr","surahMeaning":"The Declining Day","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s104r1","surah":104,"surahName":"Al-Humazah","surahMeaning":"The Traducer","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s105r1","surah":105,"surahName":"Al-Fil","surahMeaning":"The Elephant","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s106r1","surah":106,"surahName":"Quraysh","surahMeaning":"Quraysh","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s107r1","surah":107,"surahName":"Al-Ma'un","surahMeaning":"The Small Kindnesses","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s108r1","surah":108,"surahName":"Al-Kawthar","surahMeaning":"The Abundance","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s109r1","surah":109,"surahName":"Al-Kafirun","surahMeaning":"The Disbelievers","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s110r1","surah":110,"surahName":"An-Nasr","surahMeaning":"The Divine Support","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s111r1","surah":111,"surahName":"Al-Masad","surahMeaning":"The Palm Fiber","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s112r1","surah":112,"surahName":"Al-Ikhlas","surahMeaning":"The Sincerity","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s113r1","surah":113,"surahName":"Al-Falaq","surahMeaning":"The Daybreak","ruku":1,"rukuOfSurah":1,"juz":30},{"id":"s114r1","surah":114,"surahName":"An-Nas","surahMeaning":"Mankind","ruku":1,"rukuOfSurah":1,"juz":30}],"totalRukus":558};
+</script>
+<script>
+
+/* ---------- STATE & PERSISTENCE (file-based) ---------- */
+const KEY='hifdh_tracker_v1';
+const MIRROR_KEY='hifdh_tracker_v1'; // used only if a session store happens to exist
+let STATE={ratings:{},cal:{}};
+let DIRTY=false;                 // unsaved changes since last successful save
+let CHANGES=0;                   // count of edits since last save (for the indicator)
+let FILE_HANDLE=null;            // FileSystemFileHandle if the browser supports it
+let LAST_SAVED_AT=null;          // Date of last successful file save
+const HAS_FS = (typeof window!=='undefined') && ('showSaveFilePicker' in window) && ('showOpenFilePicker' in window);
+
+const A_LABELS=['Not memorised','Very weak','Weak','Middle','Strong','Very strong'];
+const E_LABELS=['Not started','Very basic','Basic','Good','Strong','Can explain'];
+const COL_A=['var(--none)','#d99a6c','#d9b35a','#cdb24a','#7aa564','#4f8a5b'];
+const COL_E=['var(--none)','#9bb0c4','#7a9bb5','#5b8aa0','#3f7d78','#2f6f4f'];
+const A_MAX=5, E_MAX=5;
+
+function migrate(s){
+  s.ratings=s.ratings||{};
+  s.cal=s.cal||{};
+  delete s.queues; delete s.week;
+  if(s.scaleVersion!==2){
+    const map={1:2,2:3,3:4};
+    Object.keys(s.ratings).forEach(id=>{
+      const x=s.ratings[id];
+      if(x.a&&x.a<=3&&map[x.a])x.a=map[x.a];
+      if(x.e&&x.e<=3&&map[x.e])x.e=map[x.e];
+    });
+    s.scaleVersion=2;
+  }
+  return s;
+}
+
+// Detect a working localStorage. On a real hosted site (GitHub Pages) this works
+// and gives silent automatic saving. Inside a Claude artifact it does not — in
+// which case we fall back to the file/copy methods so data is never lost.
+let LS_OK=false;
+(function(){
+  try{
+    const t='__hifdh_test__';
+    window.localStorage.setItem(t,'1');
+    window.localStorage.removeItem(t);
+    LS_OK=true;
+  }catch(e){ LS_OK=false; }
+})();
+
+// Load saved progress. Priority: localStorage (real site) -> artifact store (if any).
+async function loadState(){
+  // 1. localStorage — the primary store when hosted
+  if(LS_OK){
+    try{
+      const raw=window.localStorage.getItem(KEY);
+      if(raw){ STATE=migrate(JSON.parse(raw)); return; }
+    }catch(e){ /* corrupt or blocked — fall through */ }
+  }
+  // 2. Opportunistic artifact/session store, if it happens to exist
+  try{
+    if(window.storage && typeof window.storage.get==='function'){
+      const r=await window.storage.get(KEY);
+      if(r&&r.value){ STATE=migrate(JSON.parse(r.value)); }
+    }
+  }catch(e){ /* expected when absent — ignore */ }
+}
+
+// Persist to localStorage automatically. Returns true if it actually saved.
+function persistLocal(){
+  if(!LS_OK) return false;
+  try{
+    window.localStorage.setItem(KEY,JSON.stringify(STATE));
+    return true;
+  }catch(e){ return false; }
+}
+
+// Opportunistic mirror to a session/artifact store if present — never relied upon.
+async function mirrorSave(){
+  try{
+    if(window.storage && typeof window.storage.set==='function'){
+      await window.storage.set(KEY,JSON.stringify(STATE));
+    }
+  }catch(e){ /* ignore */ }
+}
+
+function serialize(){ return JSON.stringify(STATE,null,2); }
+
+function markChanged(){
+  CHANGES++;
+  const ok=persistLocal();      // automatic save on a hosted site
+  mirrorSave();                 // harmless extra mirror if a store exists
+  if(ok){
+    // Saved silently and automatically — no manual action needed.
+    DIRTY=false; LAST_SAVED_AT=new Date(); LAST_SAVED_WHERE='auto';
+  }else{
+    // No automatic store (e.g. running inside a Claude artifact) — mark dirty
+    // so the manual Save / Copy backup prompts appear.
+    DIRTY=true;
+  }
+  updateSaveUI();
+}
+
+// --- Capability detection ---
+const CAN_SHARE_FILES = (typeof navigator!=='undefined') && !!navigator.canShare && (()=>{
+  try{ return navigator.canShare({files:[new File(['x'],'x.json',{type:'application/json'})]}); }
+  catch(e){ return false; }
+})();
+
+function markSaved(where){
+  DIRTY=false; CHANGES=0; LAST_SAVED_AT=new Date(); LAST_SAVED_WHERE=where||'';
+  persistLocal();
+  updateSaveUI();
+}
+
+// Desktop Chrome/Edge: write straight back to a previously-picked file.
+async function saveToHandle(){
+  if(!FILE_HANDLE) return false;
+  try{
+    const w=await FILE_HANDLE.createWritable();
+    await w.write(serialize());
+    await w.close();
+    markSaved('file'); showPill('Saved to your file');
+    return true;
+  }catch(e){ showPill('Save failed — try Save again'); return false; }
+}
+
+// Phone/tablet primary: open the OS share sheet with the data as a file,
+// so it can be sent to iCloud Drive / Google Drive / Files / Notes.
+async function shareSave(){
+  const fname='hifdh-tracker.json';
+  try{
+    const file=new File([serialize()],fname,{type:'application/json'});
+    if(CAN_SHARE_FILES){
+      await navigator.share({files:[file],title:'Hifdh tracker backup'});
+      markSaved('shared'); showPill('Saved — choose where to keep it');
+      return true;
+    }
+  }catch(e){
+    if(e && e.name==='AbortError'){ showPill('Save cancelled'); return false; }
+    // fall through to download
+  }
+  return false;
+}
+
+function downloadBackup(){
+  const blob=new Blob([serialize()],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='hifdh-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  markSaved('download'); showPill('Backup file downloaded');
+}
+
+// Desktop "pick a file" path (only where supported).
+async function pickAndSave(){
+  if(HAS_FS){
+    try{
+      FILE_HANDLE=await window.showSaveFilePicker({
+        suggestedName:'hifdh-tracker.json',
+        types:[{description:'Hifdh data',accept:{'application/json':['.json']}}]
+      });
+      return await saveToHandle();
+    }catch(e){
+      if(e && e.name==='AbortError') return false;
+    }
+  }
+  return false;
+}
+
+// Primary Save button: best available method for THIS device.
+async function doSave(){
+  if(FILE_HANDLE){ if(await saveToHandle()) return true; }
+  if(HAS_FS){ if(await pickAndSave()) return true; }
+  if(CAN_SHARE_FILES){ if(await shareSave()) return true; }
+  downloadBackup();           // universal fallback
+  return true;
+}
+
+// Copy all data to clipboard as text — bulletproof backstop on any phone.
+async function copyBackup(){
+  const txt=serialize();
+  try{
+    await navigator.clipboard.writeText(txt);
+    markSaved('clipboard'); showPill('Backup copied — paste it into a note');
+    return true;
+  }catch(e){
+    // Fallback: show a selectable textarea
+    showPasteBox('copy',txt);
+    return false;
+  }
+}
+
+// Open/restore.
+async function openFile(){
+  if(HAS_FS){
+    try{
+      const [h]=await window.showOpenFilePicker({
+        types:[{description:'Hifdh data',accept:{'application/json':['.json']}}]
+      });
+      FILE_HANDLE=h;
+      const file=await h.getFile();
+      applyLoaded(await file.text());
+      return;
+    }catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  document.getElementById('importFile').click();
+}
+
+// Paste-to-restore box (for the clipboard backup path).
+function showPasteBox(mode,prefill){
+  let ov=document.getElementById('pasteOverlay');
+  if(ov)ov.remove();
+  ov=document.createElement('div');
+  ov.id='pasteOverlay';
+  ov.className='paste-ov';
+  const isCopy=mode==='copy';
+  ov.innerHTML=
+    '<div class="paste-box">'
+    +'<h3>'+(isCopy?'Your backup text':'Paste your backup')+'</h3>'
+    +'<p>'+(isCopy
+        ?'Copy everything below and paste it somewhere safe (a note, email to yourself, etc.).'
+        :'Paste a previously-copied backup here, then tap Restore.')+'</p>'
+    +'<textarea id="pasteTa" '+(isCopy?'readonly':'placeholder="Paste backup text here"')+'>'
+      +(prefill?prefill.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])):'')+'</textarea>'
+    +'<div class="paste-act">'
+      +(isCopy?'<button id="pCopyBtn" class="pgo">Select all</button>'
+              :'<button id="pRestoreBtn" class="pgo">Restore</button>')
+      +'<button id="pCloseBtn" class="pcl">Close</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  const ta=document.getElementById('pasteTa');
+  document.getElementById('pCloseBtn').onclick=()=>ov.remove();
+  if(isCopy){
+    document.getElementById('pCopyBtn').onclick=()=>{ ta.focus(); ta.select(); };
+    ta.focus(); ta.select();
+  }else{
+    document.getElementById('pRestoreBtn').onclick=()=>{
+      const v=ta.value.trim();
+      if(!v){ showPill('Nothing pasted'); return; }
+      applyLoaded(v); ov.remove();
+    };
+  }
+}
+
+function applyLoaded(txt){
+  try{
+    const d=JSON.parse(txt);
+    if(d && d.ratings){
+      STATE=migrate(d);
+      markSaved(FILE_HANDLE?'file':'loaded');
+      switchTo('overview');
+      showPill('Loaded successfully');
+    }else{
+      showPill('That doesn\u2019t look like a valid backup');
+    }
+  }catch(e){ showPill('Could not read that backup'); }
+}
+
+// Compatibility shim: existing code calls queueSave() everywhere.
+function queueSave(){ markChanged(); }
+
+let pillTimer=null;
+function showPill(txt){
+  const p=document.getElementById('savePill');
+  if(!p)return;
+  p.textContent=txt; p.classList.add('show');
+  clearTimeout(pillTimer);
+  pillTimer=setTimeout(()=>p.classList.remove('show'),2200);
+}
+
+function fmtTime(d){
+  if(!d) return '';
+  const hh=String(d.getHours()).padStart(2,'0');
+  const mm=String(d.getMinutes()).padStart(2,'0');
+  return hh+':'+mm;
+}
+
+const SAVE_NUDGE=8; // remind to save after this many changes
+
+function updateSaveUI(){
+  const b=document.getElementById('saveBanner');
+  if(!b)return;
+  if(!DIRTY){
+    if(LAST_SAVED_AT){
+      if(LAST_SAVED_WHERE==='auto'){
+        // Silent automatic saving is working (hosted site). Keep it quiet.
+        b.style.display='none';
+        return;
+      }
+      const where = LAST_SAVED_WHERE==='file' ? ' to your file'
+                  : LAST_SAVED_WHERE==='shared' ? ' (sent to your chosen app)'
+                  : LAST_SAVED_WHERE==='clipboard' ? ' (copied to clipboard)'
+                  : LAST_SAVED_WHERE==='download' ? ' (downloaded)'
+                  : '';
+      b.style.display='block';
+      b.className='save-banner ok';
+      b.innerHTML='<span class="sdot"></span>Saved'+where+' \u00b7 '+fmtTime(LAST_SAVED_AT);
+    }else if(LS_OK){
+      // Hosted with working storage but nothing saved yet — reassure once.
+      b.style.display='block';
+      b.className='save-banner ok';
+      b.innerHTML='<span class="sdot"></span>Your progress saves automatically on this device.';
+    }else{
+      b.style.display='block';
+      b.className='save-banner info';
+      b.innerHTML='Automatic saving isn\u2019t available here. '
+        +'Tap <b>Save</b> to keep a file (send it to iCloud Drive / Files), or <b>Copy backup</b> for a paste-able copy. '
+        +'<span class="sub">Hosting this page on the web makes saving automatic \u2014 see the included setup guide.</span>';
+    }
+    return;
+  }
+  // DIRTY (only reached when there is no automatic store)
+  b.style.display='block';
+  b.className='save-banner warn';
+  const urgent = CHANGES>=SAVE_NUDGE;
+  b.innerHTML='<b>'+CHANGES+' unsaved change'+(CHANGES===1?'':'s')+'.</b> '
+    +(urgent?'It\u2019s been a while \u2014 save now so you don\u2019t lose this. ':'Tap Save when you\u2019re ready. ')
+    +'<button id="bSave" class="rb">Save</button>'
+    +'<button id="bCopy" class="rb alt">Copy backup</button>';
+  const bs=document.getElementById('bSave'); if(bs)bs.onclick=()=>doSave();
+  const bc=document.getElementById('bCopy'); if(bc)bc.onclick=()=>copyBackup();
+}
+
+function getR(id){ return STATE.ratings[id]||{a:0,e:0}; }
+function setR(id,k,v){
+  const cur=getR(id);
+  const nv={...cur,[k]:v};
+  if(nv.a===0&&nv.e===0) delete STATE.ratings[id];
+  else STATE.ratings[id]=nv;
+  queueSave();
+}
+
+/* ---------- DERIVED STATS ---------- */
+function juzRukus(j){ return QURAN.rukus.filter(r=>r.juz===j); }
+function stats(list){
+  let mem=0,strong=0,engAny=0,engExplain=0;
+  list.forEach(r=>{const x=getR(r.id);
+    if(x.a>0)mem++; if(x.a>=4)strong++;
+    if(x.e>0)engAny++; if(x.e===5)engExplain++;});
+  return {total:list.length,mem,strong,engAny,engExplain};
+}
+function aDist(list){
+  const d=[0,0,0,0,0,0];
+  list.forEach(r=>d[getR(r.id).a]++);
+  return d;
+}
+
+/* ---------- OVERVIEW ---------- */
+function renderOverview(){
+  const all=QURAN.rukus, s=stats(all), d=aDist(all);
+  const memPct=Math.round(s.mem/s.total*100);
+  const strPct=Math.round(s.strong/s.total*100);
+  const engPct=Math.round(s.engAny/s.total*100);
+  // juz fully memorised count
+  let juzMem=0,juzStrong=0;
+  for(let j=1;j<=30;j++){const js=stats(juzRukus(j));
+    if(js.mem===js.total)juzMem++;
+    if(js.strong===js.total)juzStrong++;}
+  const seg=(d,cols)=>d.map((v,i)=>v?`<i style="width:${v/s.total*100}%;background:${cols[i]}"></i>`:'').join('');
+
+  let jz='';
+  for(let j=1;j<=30;j++){
+    const js=stats(juzRukus(j)), jd=aDist(juzRukus(j));
+    const mp=Math.round(js.mem/js.total*100);
+    const fill=jd.map((v,i)=>v?`<i style="width:${v/js.total*100}%;background:${COL_A[i]}"></i>`:'').join('');
+    jz+=`<div class="jz" data-jz="${j}">
+      <div class="n">Juz ${j}</div>
+      <div class="pct">${js.mem}/${js.total} memorised · ${mp}%</div>
+      <div class="mini">${fill}</div></div>`;
+  }
+
+  document.getElementById('overview').innerHTML=`
+   <div class="stat-grid">
+     <div class="stat card">
+       <div class="lbl">Arabic memorised</div>
+       <div class="big">${s.mem}<small> / ${s.total} ruku</small></div>
+       <div class="meta">${memPct}% of the Qur'an · ${juzMem} juz complete</div>
+     </div>
+     <div class="stat card">
+       <div class="lbl">Strong</div>
+       <div class="big">${s.strong}<small> / ${s.total}</small></div>
+       <div class="meta">${strPct}% strong · ${juzStrong} juz fully strong</div>
+     </div>
+     <div class="stat card">
+       <div class="lbl">English understanding</div>
+       <div class="big">${s.engAny}<small> / ${s.total}</small></div>
+       <div class="meta">${engPct}% started · ${s.engExplain} can explain to others</div>
+     </div>
+   </div>
+
+   <div class="card" style="padding:20px 22px">
+     <div class="lbl" style="font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-soft)">Whole Qur'an — Arabic strength</div>
+     <div class="bar">${seg(d,COL_A)}</div>
+     <div class="legend">
+       ${A_LABELS.map((lab,i)=>`<span><i class="dot" style="background:${COL_A[i]}"></i>${lab} ${d[i]}</span>`).join('')}
+     </div>
+   </div>
+
+   <h2 class="ov-title">By Juz</h2>
+   <div class="ov-note">Tap any juz to jump to its first surah in the tracker.</div>
+   <div class="juz-strip">${jz}</div>`;
+
+  document.querySelectorAll('.jz').forEach(el=>el.onclick=()=>{
+    const j=+el.dataset.jz;
+    const first=QURAN.rukus.find(r=>r.juz===j);
+    if(first)CUR_SURAH=first.surah;
+    switchTo('tracker');
+  });
+}
+
+/* ---------- TRACKER ---------- */
+let CUR_SURAH=1;
+function surahRukus(sn){ return QURAN.rukus.filter(r=>r.surah===sn); }
+function renderTracker(){
+  // build surah dropdown options with progress glyphs
+  let opts='';
+  QURAN.surahs.forEach(su=>{
+    const ss=stats(surahRukus(su.no));
+    const g=ss.mem===ss.total?'✓ ':(ss.mem>0?'· ':'   ');
+    opts+=`<option value="${su.no}" ${su.no===CUR_SURAH?'selected':''}>${g}${su.no}. ${su.en} — ${su.mn} (${su.rc} ruku)</option>`;
+  });
+
+  const list=surahRukus(CUR_SURAH);
+  const f=list[0];
+  const ss=stats(list);
+  // juz span for this surah (label only)
+  const juzSet=[...new Set(list.map(r=>r.juz))].sort((a,b)=>a-b);
+  const juzLbl=juzSet.length===1?`Juz ${juzSet[0]}`:`Juz ${juzSet[0]}–${juzSet[juzSet.length-1]}`;
+
+  // prev / next surah buttons
+  const prevN=CUR_SURAH>1?CUR_SURAH-1:null;
+  const nextN=CUR_SURAH<114?CUR_SURAH+1:null;
+
+  let body=`<div class="surah-blk">`;
+  list.forEach(r=>{
+    const x=getR(r.id);
+    const pa=[1,2,3,4,5].map(v=>`<button class="pip a-${v} ${x.a===v?'on':''}" data-id="${r.id}" data-k="a" data-v="${v}" title="${A_LABELS[v]}">${v}</button>`).join('');
+    const pe=[1,2,3,4,5].map(v=>`<button class="pip e-${v} ${x.e===v?'on':''}" data-id="${r.id}" data-k="e" data-v="${v}" title="${E_LABELS[v]}">${v}</button>`).join('');
+    body+=`<div class="ruku-row">
+      <div class="rk">Ruku ${r.ruku}<small>of ${r.rukuOfSurah} · Juz ${r.juz}</small></div>
+      <div class="scales">
+        <div class="scale"><span class="cap">Arabic</span><div class="pips">${pa}</div></div>
+        <div class="scale"><span class="cap">English</span><div class="pips">${pe}</div></div>
+      </div></div>`;
+  });
+  body+=`</div>`;
+
+  document.getElementById('tracker').innerHTML=`
+    <div class="surah-nav">
+      <button class="navbtn" id="prevS" ${prevN?'':'disabled'} title="Previous surah">‹</button>
+      <select id="surahSel" class="surah-select">${opts}</select>
+      <button class="navbtn" id="nextS" ${nextN?'':'disabled'} title="Next surah">›</button>
+    </div>
+    <div class="surah-h" style="margin-top:18px">
+      <span class="sn">${f.surah}. ${f.surahName}</span>
+      <span class="sm">${f.surahMeaning}</span>
+      <span class="sx">${f.rukuOfSurah} ruku · ${juzLbl} · ${ss.mem}/${ss.total} memorised · ${ss.strong} strong</span>
+    </div>
+    <div class="help" style="margin:14px 0 16px">
+      <b>Arabic 1–5:</b> 1 Very weak · 2 Weak · 3 Middle · 4 Strong · 5 Very strong<br>
+      <b>English 1–5:</b> 1 Very basic · 2 Basic · 3 Good · 4 Strong · 5 Can explain to others<br>
+      Tap a level to set it; tap it again to clear back to "not memorised".
+    </div>
+    ${body}`;
+
+  const sel=document.getElementById('surahSel');
+  sel.onchange=()=>{CUR_SURAH=+sel.value;renderTracker();};
+  const ps=document.getElementById('prevS'), ns=document.getElementById('nextS');
+  if(prevN)ps.onclick=()=>{CUR_SURAH=prevN;renderTracker();};
+  if(nextN)ns.onclick=()=>{CUR_SURAH=nextN;renderTracker();};
+  document.querySelectorAll('.pip').forEach(p=>p.onclick=()=>{
+    const id=p.dataset.id,k=p.dataset.k,v=+p.dataset.v;
+    const cur=getR(id)[k];
+    setR(id,k,cur===v?0:v);
+    renderTracker();
+  });
+}
+
+/* ---------- PLANNER (CALENDAR) ---------- */
+const QMETA={
+  mem:{name:'New memorisation',short:'New',color:'var(--strong)'},
+  revL:{name:'Revision — with looking',short:'Rev (look)',color:'var(--mid)'},
+  revN:{name:'Revision — without looking',short:'Rev (no look)',color:'var(--teal)'},
+  eng:{name:'English revision',short:'English',color:'var(--green)'}
+};
+const QORDER=['mem','revL','revN','eng'];
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let PLAN_VIEW='week';            // 'week' | 'month'
+let PLAN_REF=new Date();         // anchor date for the displayed period
+let SEL_DAY=null;                // 'YYYY-MM-DD' currently open in the panel
+
+function dkey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function parseKey(k){const[y,m,da]=k.split('-').map(Number);return new Date(y,m-1,da);}
+function todayKey(){return dkey(new Date());}
+function dayEntries(k){return (STATE.cal&&STATE.cal[k])?STATE.cal[k]:[];}
+function startOfWeek(d){const x=new Date(d);x.setDate(x.getDate()-x.getDay());x.setHours(0,0,0,0);return x;}
+
+function planHeaderLabel(){
+  if(PLAN_VIEW==='week'){
+    const s=startOfWeek(PLAN_REF), e=new Date(s);e.setDate(s.getDate()+6);
+    const sm=MON[s.getMonth()].slice(0,3), em=MON[e.getMonth()].slice(0,3);
+    return `${sm} ${s.getDate()} – ${em} ${e.getDate()}, ${e.getFullYear()}`;
+  }
+  return `${MON[PLAN_REF.getMonth()]} ${PLAN_REF.getFullYear()}`;
+}
+function shiftPlan(dir){
+  const d=new Date(PLAN_REF);
+  if(PLAN_VIEW==='week') d.setDate(d.getDate()+dir*7);
+  else d.setMonth(d.getMonth()+dir);
+  PLAN_REF=d; renderPlanner();
+}
+
+function dayCellHTML(d,compact){
+  const k=dkey(d), entries=dayEntries(k);
+  const isToday=k===todayKey();
+  const otherMonth=!compact && d.getMonth()!==PLAN_REF.getMonth();
+  let dots=entries.slice(0,4).map(en=>`<i class="cdot" style="background:${QMETA[en.action].color};${en.done?'opacity:.35':''}"></i>`).join('');
+  if(entries.length>4) dots+=`<i class="cmore">+${entries.length-4}</i>`;
+  let lines='';
+  if(compact){
+    lines=entries.length?entries.map((en,i)=>`
+      <div class="cline ${en.done?'cdone':''}">
+        <i class="cdot" style="background:${QMETA[en.action].color}"></i>
+        <span>${en.note?escapeHtml(en.note):QMETA[en.action].short}</span>
+      </div>`).join(''):`<div class="cnone">—</div>`;
+  }
+  return `<div class="cell ${otherMonth?'dim':''} ${isToday?'today':''} ${SEL_DAY===k?'sel':''}" data-day="${k}">
+    <div class="cnum">${d.getDate()}${isToday?'<em>today</em>':''}</div>
+    ${compact?`<div class="clines">${lines}</div>`:`<div class="cdots">${dots}</div>`}
+  </div>`;
+}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function renderPlanner(){
+  let grid='';
+  if(PLAN_VIEW==='week'){
+    const s=startOfWeek(PLAN_REF);
+    let cells='';
+    for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);cells+=dayCellHTML(d,true);}
+    grid=`<div class="cal-grid week">
+      ${DOW.map(x=>`<div class="cal-dow">${x}</div>`).join('')}
+      ${cells}</div>`;
+  }else{
+    const first=new Date(PLAN_REF.getFullYear(),PLAN_REF.getMonth(),1);
+    const start=startOfWeek(first);
+    let cells='';
+    for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);cells+=dayCellHTML(d,false);}
+    grid=`<div class="cal-grid month">
+      ${DOW.map(x=>`<div class="cal-dow">${x}</div>`).join('')}
+      ${cells}</div>`;
+  }
+
+  // detail panel for selected day
+  let panel='';
+  if(SEL_DAY){
+    const k=SEL_DAY, d=parseKey(k), entries=dayEntries(k);
+    const dlabel=`${DOW[d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+    let elist=entries.length?entries.map((en,i)=>`
+      <div class="pentry ${en.done?'pdone':''}">
+        <i class="qtag" style="background:${QMETA[en.action].color}"></i>
+        <div class="pt"><b>${QMETA[en.action].name}</b>${en.note?`<br><span>${escapeHtml(en.note)}</span>`:''}</div>
+        <button class="pdoneb" data-done="${i}" title="${en.done?'Mark not done':'Mark done'}">${en.done?'↺':'✓'}</button>
+        <button class="pdel" data-del="${i}" title="Remove">✕</button>
+      </div>`).join(''):`<div class="pempty">Nothing planned for this day yet.</div>`;
+    panel=`<div class="day-panel card">
+      <div class="ph"><h3>${dlabel}</h3><button class="pclose" id="pclose">✕</button></div>
+      <div class="plist">${elist}</div>
+      <div class="padd">
+        <div class="pact">
+          ${QORDER.map(q=>`<button class="actbtn" data-act="${q}"><i class="qtag" style="background:${QMETA[q].color}"></i>${QMETA[q].short}</button>`).join('')}
+        </div>
+        <div class="pnoterow">
+          <input id="pnote" type="text" placeholder="What to do? e.g. Juz 6, Al-Baqarah ruku 6–10" autocomplete="off">
+          <button id="paddbtn" disabled>Add</button>
+        </div>
+        <div class="phint">Pick an action above, type a note, then Add. You can add several per day.</div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('planner').innerHTML=`
+    <div class="cal-bar">
+      <div class="cal-title">
+        <h2>${planHeaderLabel()}</h2>
+        <button class="todaybtn" id="goToday">Today</button>
+      </div>
+      <div class="cal-ctrl">
+        <div class="viewtog">
+          <button class="vt ${PLAN_VIEW==='week'?'on':''}" data-v="week">Week</button>
+          <button class="vt ${PLAN_VIEW==='month'?'on':''}" data-v="month">Month</button>
+        </div>
+        <button class="navb" id="prevP" title="Previous">‹</button>
+        <button class="navb" id="nextP" title="Next">›</button>
+      </div>
+    </div>
+    <div class="help" style="margin-bottom:16px">
+      Click any day to plan it. Choose an action — <b>New memorisation</b>, <b>Revision with / without looking</b>,
+      or <b>English revision</b> — add a note, and it appears on the calendar. Tick ✓ when done.
+    </div>
+    <div class="cal-legend">
+      ${QORDER.map(q=>`<span><i class="cdot" style="background:${QMETA[q].color}"></i>${QMETA[q].name}</span>`).join('')}
+    </div>
+    ${grid}
+    ${panel}`;
+
+  // wiring
+  document.getElementById('goToday').onclick=()=>{PLAN_REF=new Date();renderPlanner();};
+  document.getElementById('prevP').onclick=()=>shiftPlan(-1);
+  document.getElementById('nextP').onclick=()=>shiftPlan(1);
+  document.querySelectorAll('.vt').forEach(b=>b.onclick=()=>{PLAN_VIEW=b.dataset.v;renderPlanner();});
+  document.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{
+    SEL_DAY=c.dataset.day; renderPlanner();
+    const p=document.querySelector('.day-panel'); if(p)p.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
+
+  if(SEL_DAY){
+    const pc=document.getElementById('pclose');
+    if(pc)pc.onclick=()=>{SEL_DAY=null;renderPlanner();};
+    let chosen=null;
+    const noteEl=document.getElementById('pnote');
+    const addBtn=document.getElementById('paddbtn');
+    const refresh=()=>{addBtn.disabled=!chosen;};
+    document.querySelectorAll('.actbtn').forEach(b=>b.onclick=()=>{
+      chosen=b.dataset.act;
+      document.querySelectorAll('.actbtn').forEach(x=>x.classList.toggle('sel',x===b));
+      refresh(); noteEl.focus();
+    });
+    const doAdd=()=>{
+      if(!chosen)return;
+      STATE.cal=STATE.cal||{};
+      STATE.cal[SEL_DAY]=STATE.cal[SEL_DAY]||[];
+      STATE.cal[SEL_DAY].push({action:chosen,note:noteEl.value.trim(),done:false});
+      queueSave(); renderPlanner(); showPill('Added to '+SEL_DAY);
+    };
+    if(addBtn)addBtn.onclick=doAdd;
+    if(noteEl)noteEl.onkeydown=e=>{if(e.key==='Enter'&&chosen)doAdd();};
+    document.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.done; const arr=STATE.cal[SEL_DAY];
+      arr[i].done=!arr[i].done; queueSave(); renderPlanner();
+    });
+    document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.del; STATE.cal[SEL_DAY].splice(i,1);
+      if(STATE.cal[SEL_DAY].length===0)delete STATE.cal[SEL_DAY];
+      queueSave(); renderPlanner(); showPill('Removed');
+    });
+  }
+}
+
+/* ---------- NAV ---------- */
+function switchTo(s){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.s===s));
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  document.getElementById(s).classList.add('active');
+  if(s==='overview')renderOverview();
+  if(s==='tracker')renderTracker();
+  if(s==='planner')renderPlanner();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchTo(t.dataset.s));
+
+/* ---------- BACKUP ---------- */
+document.getElementById('exportBtn').onclick=()=>doSave();
+document.getElementById('importBtn').onclick=()=>openFile();
+document.getElementById('copyBtn').onclick=()=>copyBackup();
+document.getElementById('pasteBtn').onclick=()=>showPasteBox('paste');
+// Warn before leaving if there are unsaved changes (data lives in a file, not the app).
+window.addEventListener('beforeunload',e=>{
+  if(DIRTY){ e.preventDefault(); e.returnValue=''; return ''; }
+});
+// Keyboard shortcut: Ctrl/Cmd+S saves (desktop convenience).
+window.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); doSave(); }
+});
+document.getElementById('importFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>applyLoaded(rd.result);
+  rd.readAsText(f);
+};
+
+/* ---------- INIT ---------- */
+(async function(){
+  await loadState();
+  renderOverview();
+  updateSaveUI();
+})();
+</script>
+</body>
+</html>
